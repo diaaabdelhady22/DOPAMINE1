@@ -1,1120 +1,2091 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>UCP Real Ultrasonic Communication</title>
 
-  <title>UCP Transmission Simulator</title>
+<style>
+*{box-sizing:border-box}
 
-  <style>
-    * {
-      box-sizing: border-box;
+body{
+    margin:0;
+    background:#0b0f14;
+    color:#f1f5f9;
+    font-family:Arial,sans-serif;
+}
+
+.container{
+    width:min(1200px,94%);
+    margin:25px auto;
+}
+
+h1{
+    margin-bottom:5px;
+}
+
+.sub{
+    color:#9ba7b4;
+    line-height:1.6;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:18px;
+    margin-top:22px;
+}
+
+.card{
+    background:#141a21;
+    border:1px solid #293541;
+    border-radius:14px;
+    padding:20px;
+}
+
+h2{
+    margin-top:0;
+}
+
+textarea{
+    width:100%;
+    min-height:130px;
+    resize:vertical;
+    background:#080c10;
+    color:#fff;
+    border:1px solid #303b47;
+    border-radius:9px;
+    padding:12px;
+    font:inherit;
+}
+
+button{
+    border:0;
+    border-radius:9px;
+    padding:12px 17px;
+    margin-top:12px;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+.primary{
+    background:#fff;
+    color:#111;
+}
+
+.secondary{
+    background:#343e49;
+    color:#fff;
+}
+
+.danger{
+    background:#642f35;
+    color:#fff;
+}
+
+.status{
+    margin-top:15px;
+    padding:11px;
+    border-radius:8px;
+    background:#080c10;
+    border:1px solid #293541;
+    font-family:monospace;
+}
+
+.green{
+    color:#8dff8d;
+}
+
+.yellow{
+    color:#ffd477;
+}
+
+.red{
+    color:#ff8585;
+}
+
+.screen{
+    min-height:190px;
+    padding:20px;
+    background:#020602;
+    border:5px solid #282e34;
+    border-radius:10px;
+    color:#8cff8c;
+    font-family:monospace;
+    font-size:25px;
+    word-break:break-word;
+    direction:ltr;
+    text-align:left;
+}
+
+.row{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+}
+
+.info{
+    margin-top:12px;
+    color:#8996a4;
+    font-size:13px;
+    line-height:1.6;
+}
+
+.log{
+    margin-top:15px;
+    height:240px;
+    overflow:auto;
+    padding:12px;
+    background:#080c10;
+    border:1px solid #293541;
+    border-radius:9px;
+    font-family:monospace;
+    font-size:13px;
+    direction:ltr;
+    text-align:left;
+}
+
+.controls{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-top:14px;
+}
+
+.control{
+    background:#0a0f14;
+    border:1px solid #293541;
+    border-radius:9px;
+    padding:12px;
+}
+
+.control label{
+    display:block;
+    color:#98a5b3;
+    font-size:13px;
+    margin-bottom:7px;
+}
+
+input{
+    width:100%;
+    background:#05090d;
+    border:1px solid #303b47;
+    border-radius:7px;
+    padding:9px;
+    color:#fff;
+}
+
+.bar{
+    margin-top:14px;
+    height:7px;
+    background:#252e37;
+    border-radius:20px;
+    overflow:hidden;
+}
+
+.bar div{
+    height:100%;
+    width:0;
+    background:#ddd;
+}
+
+.arch{
+    margin-top:20px;
+    padding:20px;
+    background:#141a21;
+    border:1px solid #293541;
+    border-radius:14px;
+    text-align:center;
+}
+
+.arch span{
+    display:inline-block;
+    padding:10px 13px;
+    margin:4px;
+    background:#080c10;
+    border:1px solid #303b47;
+    border-radius:8px;
+}
+
+@media(max-width:800px){
+    .grid{
+        grid-template-columns:1fr;
     }
 
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #0d1117;
-      color: #f1f5f9;
+    .controls{
+        grid-template-columns:1fr;
     }
-
-    .container {
-      width: min(1100px, 94%);
-      margin: 30px auto;
-    }
-
-    h1 {
-      margin-bottom: 8px;
-    }
-
-    .description {
-      color: #9ca8b5;
-      line-height: 1.7;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 18px;
-      margin-top: 20px;
-    }
-
-    .card {
-      background: #151b23;
-      border: 1px solid #293441;
-      border-radius: 14px;
-      padding: 20px;
-    }
-
-    h2 {
-      margin-top: 0;
-      font-size: 19px;
-    }
-
-    label {
-      display: block;
-      margin: 15px 0 7px;
-      color: #aab5c2;
-      font-size: 14px;
-    }
-
-    textarea,
-    input {
-      width: 100%;
-      border: 1px solid #303b49;
-      background: #0a0f14;
-      color: white;
-      border-radius: 9px;
-      padding: 12px;
-      font-family: inherit;
-    }
-
-    textarea {
-      min-height: 250px;
-      resize: vertical;
-      direction: ltr;
-      text-align: left;
-    }
-
-    input[type="range"] {
-      padding: 0;
-    }
-
-    .value {
-      color: white;
-      font-weight: bold;
-    }
-
-    .buttons {
-      display: flex;
-      gap: 10px;
-      margin-top: 18px;
-    }
-
-    button {
-      border: 0;
-      border-radius: 9px;
-      padding: 12px 18px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    #start {
-      background: #fff;
-      color: #111;
-    }
-
-    #stop {
-      background: #333c47;
-      color: white;
-    }
-
-    .screen {
-      min-height: 180px;
-      background: #030903;
-      border: 5px solid #282e34;
-      border-radius: 10px;
-      padding: 20px;
-
-      color: #8cff8c;
-
-      font-family: monospace;
-      font-size: 25px;
-
-      direction: ltr;
-      text-align: left;
-
-      word-break: break-word;
-    }
-
-    .waiting {
-      font-size: 15px;
-      color: #647064;
-    }
-
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 9px;
-      margin-top: 15px;
-    }
-
-    .stat {
-      background: #0d1218;
-      border: 1px solid #27313c;
-      border-radius: 9px;
-      padding: 12px;
-    }
-
-    .stat-title {
-      color: #8c98a6;
-      font-size: 12px;
-    }
-
-    .stat-value {
-      display: block;
-      font-size: 20px;
-      font-weight: bold;
-      margin-top: 5px;
-    }
-
-    .progress {
-      width: 100%;
-      height: 9px;
-      background: #252d36;
-      border-radius: 20px;
-      overflow: hidden;
-      margin-top: 15px;
-    }
-
-    .progress-bar {
-      width: 0%;
-      height: 100%;
-      background: #dce4ec;
-      transition: width 0.05s linear;
-    }
-
-    .log {
-      margin-top: 18px;
-      background: #0a0f14;
-      border: 1px solid #26313c;
-      border-radius: 9px;
-      padding: 12px;
-
-      height: 270px;
-      overflow-y: auto;
-
-      direction: ltr;
-      text-align: left;
-
-      font-family: monospace;
-      font-size: 13px;
-      line-height: 1.7;
-    }
-
-    .rx {
-      color: #8cff8c;
-    }
-
-    .drop {
-      color: #ffbf69;
-    }
-
-    .info {
-      color: #8ea0b2;
-    }
-
-    .architecture {
-      margin-top: 20px;
-      text-align: center;
-      padding: 20px;
-      border: 1px solid #293441;
-      border-radius: 14px;
-      background: #151b23;
-    }
-
-    .architecture span {
-      display: inline-block;
-      padding: 12px 16px;
-      background: #0b1016;
-      border: 1px solid #303b49;
-      border-radius: 8px;
-      margin: 5px;
-    }
-
-    .arrow {
-      color: #8d9aa8;
-    }
-
-    @media (max-width: 800px) {
-      .grid {
-        grid-template-columns: 1fr;
-      }
-
-      .stats {
-        grid-template-columns: 1fr 1fr;
-      }
-    }
-  </style>
+}
+</style>
 </head>
+
 
 <body>
 
 <div class="container">
 
-  <h1>UCP Ultrasonic Transmission Simulator</h1>
+<h1>UCP Real Ultrasonic Communication</h1>
 
-  <p class="description">
-    محاكاة لفكرة UCP: النص يتحول إلى بيانات رقمية،
-    البيانات تتقسم إلى Packets، ثم يتم إرسالها واستقبالها
-    بسرعة محددة، وبعدها تظهر على شاشة السوار.
-  </p>
+<div class="sub">
+Device 1 converts speech/text into digital data and transmits it using a real ultrasonic carrier.
+Device 2 listens with its microphone, demodulates the ultrasonic signal and reconstructs the original text.
+</div>
 
 
-  <!-- TRANSMITTER -->
+<div class="grid">
 
-  <div class="grid">
 
-    <section class="card">
+<!-- =====================================================
+     TRANSMITTER
+===================================================== -->
 
-      <h2>Transmitter</h2>
+<section class="card">
 
-      <label>
-        الكلام / الرسائل التي سيتم إرسالها
-      </label>
+<h2>TRANSMITTER — Device 1</h2>
 
-      <textarea id="messageInput">HELP ME
-PLEASE GO TO THE EXIT
-DOCTOR NEEDED
-WAIT HERE
-EMERGENCY
-THE DOOR IS OPEN
-MEETING ROOM
-CALL FOR HELP
-PLEASE WAIT
-GO LEFT
-GO RIGHT
-FIRE EXIT
-ROOM 204
-I NEED ASSISTANCE
-THANK YOU
-WELCOME
-CHECK THE PATIENT
-MOVE FORWARD
+<textarea
+id="txText"
+placeholder="Type the message here...">HELP I NEED ASSISTANCE</textarea>
+
+
+<div class="row">
+
+<button
+id="speakButton"
+class="primary">
+USE MICROPHONE / SPEECH
+</button>
+
+<button
+id="sendButton"
+class="primary">
+SEND ULTRASONIC
+</button>
+
+<button
+id="stopTx"
+class="danger">
 STOP
-DANGER
-SAFE
-UCP SYSTEM ACTIVE
-PLEASE FOLLOW THE INSTRUCTIONS
-EMERGENCY EXIT
-PLEASE WAIT FOR ASSISTANCE
-DOCTOR PLEASE COME HERE
-ROOM 105
-ROOM 204
-ROOM 301
-MAIN ENTRANCE
-SECOND FLOOR
-FIRST FLOOR
-GO UP
-GO DOWN
-TURN LEFT
-TURN RIGHT
-HELP
-NEED HELP
-CALL SECURITY
-CALL DOCTOR
-PLEASE STOP
-PLEASE MOVE
-WARNING
-ATTENTION
-IMPORTANT MESSAGE
-SYSTEM READY
-SYSTEM ACTIVE
-MESSAGE RECEIVED
-PATIENT READY
-PATIENT NEEDS HELP
-GO TO ROOM 12
-GO TO ROOM 15
-WAIT AT THE DOOR
-WAIT OUTSIDE
-COME HERE
-FOLLOW ME
-PLEASE RETURN
-ACCESS DENIED
-ACCESS GRANTED
-DO NOT ENTER
-ENTER NOW
-EVACUATE
-FIRE
-SAFE AREA
-DANGER AREA
-CALL EMERGENCY
-NEED ASSISTANCE
-THANK YOU
-PLEASE WAIT
-UCP TEST MESSAGE
-ULTRASONIC DATA
-SIGNAL RECEIVED
-SIGNAL LOST
-RETRY
-CONNECTION OK
-CONNECTION LOST
-TRANSMISSION START
-TRANSMISSION END
-PACKET RECEIVED
-PACKET LOST
-DATA RECEIVED
-DATA LOST
-REPEAT MESSAGE
-NEXT MESSAGE
-MESSAGE START
-MESSAGE END
+</button>
+
+</div>
+
+
+<div class="controls">
+
+<div class="control">
+
+<label>
+Ultrasonic frequency A
+</label>
+
+<input
+id="freqA"
+type="number"
+value="21000">
+
+</div>
+
+
+<div class="control">
+
+<label>
+Ultrasonic frequency B
+</label>
+
+<input
+id="freqB"
+type="number"
+value="23000">
+
+</div>
+
+
+<div class="control">
+
+<label>
+Bit duration (ms)
+</label>
+
+<input
+id="bitTime"
+type="number"
+value="12">
+
+</div>
+
+
+<div class="control">
+
+<label>
+Volume
+</label>
+
+<input
+id="volume"
+type="number"
+value="0.8"
+min="0.05"
+max="1"
+step="0.05">
+
+</div>
+
+</div>
+
+
+<div
+id="txStatus"
+class="status">
+TX: Ready
+</div>
+
+
+<div class="bar">
+<div id="txProgress"></div>
+</div>
+
+
+<div class="info">
+
+Protocol:
+
+<br>
+
+<strong>FSK</strong>
+
+<br>
+
+BIT 0 → Frequency A
+
+<br>
+
+BIT 1 → Frequency B
+
+<br>
+
+The ultrasonic signal carries the encoded text.
+
+</div>
+
+</section>
+
+
+
+<!-- =====================================================
+     RECEIVER
+===================================================== -->
+
+<section class="card">
+
+<h2>RECEIVER — Device 2</h2>
+
+<button
+id="startRx"
+class="primary">
+START MICROPHONE
+</button>
+
+<button
+id="stopRx"
+class="secondary">
+STOP LISTENING
+</button>
+
+
+<div
+id="rxStatus"
+class="status">
+RX: Waiting for microphone
+</div>
+
+
+<div style="margin-top:15px">
+
+<div
+id="screen"
+class="screen">
+
 UCP READY
-UCP ACTIVE
-UCP ONLINE
-UCP OFFLINE
-TEST MESSAGE 1
-TEST MESSAGE 2
-TEST MESSAGE 3
-TEST MESSAGE 4
-TEST MESSAGE 5
-TEST MESSAGE 6
-TEST MESSAGE 7
-TEST MESSAGE 8
-TEST MESSAGE 9
-TEST MESSAGE 10
-TEST MESSAGE 11
-TEST MESSAGE 12
-TEST MESSAGE 13
-TEST MESSAGE 14
-TEST MESSAGE 15
-TEST MESSAGE 16
-TEST MESSAGE 17
-TEST MESSAGE 18
-TEST MESSAGE 19
-TEST MESSAGE 20
-TEST MESSAGE 21
-TEST MESSAGE 22
-TEST MESSAGE 23
-TEST MESSAGE 24
-TEST MESSAGE 25
-TEST MESSAGE 26
-TEST MESSAGE 27
-TEST MESSAGE 28
-TEST MESSAGE 29
-TEST MESSAGE 30
-TEST MESSAGE 31
-TEST MESSAGE 32
-TEST MESSAGE 33
-TEST MESSAGE 34
-TEST MESSAGE 35
-TEST MESSAGE 36
-TEST MESSAGE 37
-TEST MESSAGE 38
-TEST MESSAGE 39
-TEST MESSAGE 40
-TEST MESSAGE 41
-TEST MESSAGE 42
-TEST MESSAGE 43
-TEST MESSAGE 44
-TEST MESSAGE 45
-TEST MESSAGE 46
-TEST MESSAGE 47
-TEST MESSAGE 48
-TEST MESSAGE 49
-TEST MESSAGE 50</textarea>
-
-
-      <label>
-        سرعة الإرسال:
-        <span class="value" id="speedValue">5000</span>
-        bit/s
-      </label>
-
-      <input
-        id="speed"
-        type="range"
-        min="100"
-        max="20000"
-        value="5000"
-      >
-
-
-      <label>
-        حجم الـPacket:
-        <span class="value" id="packetValue">128</span>
-        bytes
-      </label>
-
-      <input
-        id="packetSize"
-        type="range"
-        min="8"
-        max="512"
-        value="128"
-      >
-
-
-      <label>
-        نسبة فقد البيانات:
-        <span class="value" id="lossValue">0</span>%
-      </label>
-
-      <input
-        id="loss"
-        type="range"
-        min="0"
-        max="30"
-        value="0"
-      >
-
-
-      <div class="buttons">
-
-        <button id="start">
-          START TRANSMISSION
-        </button>
 
-        <button id="stop">
-          STOP
-        </button>
+<br>
 
-      </div>
+<span
+style="font-size:14px;color:#536053">
 
+Waiting for ultrasonic message...
 
-      <div class="progress">
-        <div
-          id="progressBar"
-          class="progress-bar">
-        </div>
-      </div>
+</span>
 
-    </section>
+</div>
 
+</div>
 
-    <!-- RECEIVER -->
 
-    <section class="card">
+<div class="controls">
 
-      <h2>UCP Bracelet Receiver</h2>
+<div class="control">
 
-      <div class="screen" id="screen">
+<label>
+Detected frequency A
+</label>
 
-        UCP READY
+<div id="detA">
+21 kHz
+</div>
 
-        <div class="waiting">
-          Waiting for data...
-        </div>
+</div>
 
-      </div>
+<div class="control">
 
+<label>
+Detected frequency B
+</label>
 
-      <div class="stats">
+<div id="detB">
+23 kHz
+</div>
 
-        <div class="stat">
-          <span class="stat-title">
-            Packets Sent
-          </span>
+</div>
 
-          <span
-            class="stat-value"
-            id="sent">
-            0
-          </span>
-        </div>
+</div>
 
 
-        <div class="stat">
-          <span class="stat-title">
-            Packets Received
-          </span>
+<div class="info">
 
-          <span
-            class="stat-value"
-            id="received">
-            0
-          </span>
-        </div>
+The receiver does NOT use normal speech recognition.
 
+It detects the ultrasonic carrier, determines whether each bit is 0 or 1,
+reconstructs the bytes, validates the packet, then displays the original message.
 
-        <div class="stat">
-          <span class="stat-title">
-            Dropped
-          </span>
+</div>
 
-          <span
-            class="stat-value"
-            id="dropped">
-            0
-          </span>
-        </div>
+</section>
 
+</div>
 
-        <div class="stat">
-          <span class="stat-title">
-            Bytes
-          </span>
 
-          <span
-            class="stat-value"
-            id="bytes">
-            0
-          </span>
-        </div>
 
+<!-- =====================================================
+     LOG
+===================================================== -->
 
-        <div class="stat">
-          <span class="stat-title">
-            Time
-          </span>
+<section
+class="card"
+style="margin-top:18px">
 
-          <span
-            class="stat-value"
-            id="time">
-            0 ms
-          </span>
-        </div>
+<h2>Live Communication Log</h2>
 
+<div
+id="log"
+class="log">
 
-        <div class="stat">
-          <span class="stat-title">
-            Throughput
-          </span>
+UCP system ready.
 
-          <span
-            class="stat-value"
-            id="throughput">
-            0 B/s
-          </span>
-        </div>
+</div>
 
-      </div>
+</section>
 
-    </section>
 
-  </div>
 
+<!-- =====================================================
+     ARCHITECTURE
+===================================================== -->
 
-  <!-- LIVE LOG -->
+<div class="arch">
 
-  <section class="card" style="margin-top:18px">
+<span>Speech</span>
 
-    <h2>
-      Live Decoder
-    </h2>
+<span>→</span>
 
-    <div
-      id="log"
-      class="log">
+<span>Text</span>
 
-      <div class="info">
-        Simulator ready.
-      </div>
+<span>→</span>
 
-    </div>
+<span>Bytes</span>
 
-  </section>
+<span>→</span>
 
+<span>FSK</span>
 
-  <!-- ARCHITECTURE -->
+<span>→</span>
 
-  <section class="architecture">
+<span>21/23 kHz</span>
 
-    <span>
-      Text
-    </span>
+<span>→</span>
 
-    <span class="arrow">
-      →
-    </span>
+<span>Air</span>
 
-    <span>
-      Bytes
-    </span>
+<span>→</span>
 
-    <span class="arrow">
-      →
-    </span>
+<span>Microphone</span>
 
-    <span>
-      Packets
-    </span>
+<span>→</span>
 
-    <span class="arrow">
-      →
-    </span>
+<span>FFT</span>
 
-    <span>
-      Ultrasonic
-    </span>
+<span>→</span>
 
-    <span class="arrow">
-      →
-    </span>
+<span>Bits</span>
 
-    <span>
-      Receiver
-    </span>
+<span>→</span>
 
-    <span class="arrow">
-      →
-    </span>
+<span>Text</span>
 
-    <span>
-      ESP32
-    </span>
-
-    <span class="arrow">
-      →
-    </span>
-
-    <span>
-      OLED
-    </span>
-
-  </section>
+</div>
 
 </div>
 
 
 <script>
 
-const messageInput =
-  document.getElementById("messageInput");
+/*
+==========================================================
+ UCP REAL ULTRASONIC LINK
 
-const speed =
-  document.getElementById("speed");
+ Device 1:
 
-const packetSize =
-  document.getElementById("packetSize");
+ Speech/Text
+     ↓
+ UTF-8
+     ↓
+ Packet
+     ↓
+ FSK
+     ↓
+ Ultrasonic
 
-const loss =
-  document.getElementById("loss");
+ Device 2:
 
-const speedValue =
-  document.getElementById("speedValue");
+ Microphone
+     ↓
+ FFT
+     ↓
+ Detect 21/23 kHz
+     ↓
+ Bits
+     ↓
+ Packet
+     ↓
+ UTF-8
+     ↓
+ Text
+==========================================================
+*/
 
-const packetValue =
-  document.getElementById("packetValue");
 
-const lossValue =
-  document.getElementById("lossValue");
+let audioContext = null;
 
-const startButton =
-  document.getElementById("start");
 
-const stopButton =
-  document.getElementById("stop");
+/* ===============================
+   TRANSMITTER
+================================ */
+
+let txOscillator = null;
+let txGain = null;
+let txRunning = false;
+
+
+/* ===============================
+   RECEIVER
+================================ */
+
+let micStream = null;
+let micSource = null;
+let analyser = null;
+
+let rxRunning = false;
+
+let rxLoop = null;
+
+
+/* ===============================
+   RECEIVER DECODER
+================================ */
+
+let receivingBits = [];
+
+let receiving = false;
+
+let lastDetectedBit = null;
+
+let lastBitStart = 0;
+
+
+/* ===============================
+   DOM
+================================ */
+
+const txText =
+document.getElementById("txText");
+
+const freqA =
+document.getElementById("freqA");
+
+const freqB =
+document.getElementById("freqB");
+
+const bitTime =
+document.getElementById("bitTime");
+
+const volume =
+document.getElementById("volume");
+
+const txStatus =
+document.getElementById("txStatus");
+
+const rxStatus =
+document.getElementById("rxStatus");
 
 const screen =
-  document.getElementById("screen");
+document.getElementById("screen");
 
-const log =
-  document.getElementById("log");
+const logBox =
+document.getElementById("log");
 
-const progressBar =
-  document.getElementById("progressBar");
-
-const sentElement =
-  document.getElementById("sent");
-
-const receivedElement =
-  document.getElementById("received");
-
-const droppedElement =
-  document.getElementById("dropped");
-
-const bytesElement =
-  document.getElementById("bytes");
-
-const timeElement =
-  document.getElementById("time");
-
-const throughputElement =
-  document.getElementById("throughput");
+const txProgress =
+document.getElementById("txProgress");
 
 
-let running = false;
-let timer = null;
 
-let sent = 0;
-let received = 0;
-let dropped = 0;
-let totalBytes = 0;
+/* ===============================
+   AUDIO CONTEXT
+================================ */
 
-let startTime = 0;
+async function getAudio(){
 
+    if(!audioContext){
 
-/* -------------------------
-   Slider values
-------------------------- */
+        audioContext =
+        new (
+            window.AudioContext ||
+            window.webkitAudioContext
+        )();
 
-speed.oninput = function () {
+    }
 
-  speedValue.textContent =
-    this.value;
+    if(
+        audioContext.state ===
+        "suspended"
+    ){
 
-};
+        await audioContext.resume();
 
+    }
 
-packetSize.oninput = function () {
-
-  packetValue.textContent =
-    this.value;
-
-};
-
-
-loss.oninput = function () {
-
-  lossValue.textContent =
-    this.value;
-
-};
-
-
-/* -------------------------
-   Reset
-------------------------- */
-
-function resetStats() {
-
-  sent = 0;
-  received = 0;
-  dropped = 0;
-  totalBytes = 0;
-
-  sentElement.textContent = 0;
-  receivedElement.textContent = 0;
-  droppedElement.textContent = 0;
-  bytesElement.textContent = 0;
-
-  timeElement.textContent = "0 ms";
-
-  throughputElement.textContent =
-    "0 B/s";
-
-  progressBar.style.width =
-    "0%";
-
-  screen.innerHTML =
-    `
-      UCP READY
-      <div class="waiting">
-        Waiting for data...
-      </div>
-    `;
-
-  log.innerHTML = "";
-
+    return audioContext;
 }
 
 
-/* -------------------------
-   Log
-------------------------- */
 
-function addLog(text, type = "info") {
+/* ===============================
+   LOG
+================================ */
 
-  const line =
+function log(text){
+
+    const line =
     document.createElement("div");
 
-  line.className = type;
-
-  line.textContent =
+    line.textContent =
     text;
 
-  log.appendChild(line);
+    logBox.appendChild(line);
 
-  log.scrollTop =
-    log.scrollHeight;
+    logBox.scrollTop =
+    logBox.scrollHeight;
+}
+
+
+
+/* ===============================
+   TEXT → BYTES
+================================ */
+
+function textToBytes(text){
+
+    return new TextEncoder()
+    .encode(text);
 
 }
 
 
-/* -------------------------
-   Update stats
-------------------------- */
 
-function updateStats() {
+/* ===============================
+   BYTE → BITS
+================================ */
 
-  sentElement.textContent =
-    sent;
+function byteToBits(byte){
 
-  receivedElement.textContent =
-    received;
+    const result = [];
 
-  droppedElement.textContent =
-    dropped;
+    for(let i=7;i>=0;i--){
 
-  bytesElement.textContent =
-    totalBytes;
+        result.push(
+            (byte >> i) & 1
+        );
 
+    }
 
-  const elapsed =
-    performance.now() - startTime;
-
-
-  timeElement.textContent =
-    Math.round(elapsed) + " ms";
-
-
-  const throughput =
-    elapsed > 0
-      ? totalBytes / (elapsed / 1000)
-      : 0;
-
-
-  throughputElement.textContent =
-    Math.round(throughput) + " B/s";
-
+    return result;
 }
 
 
-/* -------------------------
-   START
-------------------------- */
 
-startButton.onclick = function () {
+/* ===============================
+   BYTES → BITS
+================================ */
 
-  if (running) {
-    return;
-  }
+function bytesToBits(bytes){
 
+    let bits = [];
 
-  resetStats();
+    for(
+        const byte of bytes
+    ){
 
-  running = true;
+        bits.push(
+            ...byteToBits(byte)
+        );
 
-  startTime =
-    performance.now();
+    }
 
-
-  const text =
-    messageInput.value;
-
-
-  const encoder =
-    new TextEncoder();
+    return bits;
+}
 
 
-  const data =
-    encoder.encode(text);
+
+/* ===============================
+   XOR CHECKSUM
+================================ */
+
+function checksum(bytes){
+
+    let result = 0;
+
+    for(
+        const byte of bytes
+    ){
+
+        result ^= byte;
+
+    }
+
+    return result;
+}
 
 
-  const size =
-    Number(packetSize.value);
+
+/* ===============================
+   PACKET
+================================ */
+
+function createPacket(text){
+
+    const payload =
+    textToBytes(text);
 
 
-  const bitsPerSecond =
-    Number(speed.value);
+    if(
+        payload.length > 255
+    ){
 
+        throw new Error(
+            "Message is too long."
+        );
 
-  const lossProbability =
-    Number(loss.value) / 100;
-
-
-  let position = 0;
-
-
-  addLog(
-    "TRANSMISSION START",
-    "info"
-  );
-
-
-  addLog(
-    "DATA SIZE: " +
-    data.length +
-    " bytes",
-    "info"
-  );
-
-
-  addLog(
-    "SPEED: " +
-    bitsPerSecond +
-    " bit/s",
-    "info"
-  );
-
-
-  addLog(
-    "PACKET SIZE: " +
-    size +
-    " bytes",
-    "info"
-  );
-
-
-  function sendNextPacket() {
-
-    if (!running) {
-      return;
     }
 
 
-    /* Finished */
+    let bits = [];
 
-    if (position >= data.length) {
 
-      running = false;
+    /*
+       PREAMBLE
 
-      progressBar.style.width =
+       10101010 repeated
+    */
+
+    const preamble =
+    "10101010101010101010101010101010";
+
+
+    for(
+        const c of preamble
+    ){
+
+        bits.push(
+            Number(c)
+        );
+
+    }
+
+
+    /*
+       START
+    */
+
+    bits.push(
+        1,1,1,1,
+        0,0,0,0
+    );
+
+
+    /*
+       LENGTH
+    */
+
+    bits.push(
+        ...byteToBits(
+            payload.length
+        )
+    );
+
+
+    /*
+       DATA
+    */
+
+    bits.push(
+        ...bytesToBits(
+            payload
+        )
+    );
+
+
+    /*
+       CHECKSUM
+    */
+
+    bits.push(
+        ...byteToBits(
+            checksum(payload)
+        )
+    );
+
+
+    /*
+       END
+    */
+
+    bits.push(
+        0,0,0,0,
+        1,1,1,1
+    );
+
+
+    return bits;
+}
+
+
+
+/* ===============================
+   TRANSMIT
+================================ */
+
+async function transmit(){
+
+    if(txRunning)
+    return;
+
+
+    const text =
+    txText.value.trim();
+
+
+    if(!text){
+
+        alert(
+            "Write something first."
+        );
+
+        return;
+    }
+
+
+    const ctx =
+    await getAudio();
+
+
+    const A =
+    Number(freqA.value);
+
+
+    const B =
+    Number(freqB.value);
+
+
+    const duration =
+    Number(bitTime.value);
+
+
+    const vol =
+    Number(volume.value);
+
+
+    const bits =
+    createPacket(text);
+
+
+    txRunning =
+    true;
+
+
+    txStatus.textContent =
+    "TX: Transmitting ultrasonic data";
+
+
+    txStatus.className =
+    "status green";
+
+
+    log(
+    "TX START — " +
+    bits.length +
+    " bits"
+    );
+
+
+    log(
+    "FSK: " +
+    A +
+    " Hz / " +
+    B +
+    " Hz"
+    );
+
+
+    /*
+       Create oscillator
+    */
+
+    txOscillator =
+    ctx.createOscillator();
+
+
+    txGain =
+    ctx.createGain();
+
+
+    txOscillator.type =
+    "sine";
+
+
+    txGain.gain.value =
+    0;
+
+
+    txOscillator.connect(
+        txGain
+    );
+
+
+    txGain.connect(
+        ctx.destination
+    );
+
+
+    txOscillator.start();
+
+
+    const start =
+    ctx.currentTime;
+
+
+    /*
+       Schedule bits
+    */
+
+    for(
+        let i=0;
+        i<bits.length;
+        i++
+    ){
+
+        const t =
+        start +
+        (
+            i *
+            duration /
+            1000
+        );
+
+
+        const frequency =
+        bits[i] === 0
+        ? A
+        : B;
+
+
+        txOscillator
+        .frequency
+        .setValueAtTime(
+            frequency,
+            t
+        );
+
+
+        txGain
+        .gain
+        .setValueAtTime(
+            0,
+            t
+        );
+
+
+        txGain
+        .gain
+        .setValueAtTime(
+            vol,
+            t + 0.001
+        );
+
+
+        /*
+           Smooth off at the end
+        */
+
+        txGain
+        .gain
+        .setValueAtTime(
+            0,
+            t +
+            (
+                duration /
+                1000
+            ) -
+            0.001
+        );
+
+
+        txProgress.style.width =
+        (
+            i /
+            bits.length *
+            100
+        ) + "%";
+
+    }
+
+
+    const total =
+    bits.length *
+    duration;
+
+
+    setTimeout(
+    ()=>{
+
+        if(txOscillator){
+
+            try{
+
+                txOscillator.stop();
+
+            }catch(e){}
+
+            txOscillator.disconnect();
+
+            txOscillator =
+            null;
+
+        }
+
+
+        if(txGain){
+
+            txGain.disconnect();
+
+            txGain =
+            null;
+
+        }
+
+
+        txRunning =
+        false;
+
+
+        txProgress.style.width =
         "100%";
 
 
-      addLog(
-        "TRANSMISSION COMPLETE",
-        "rx"
-      );
+        txStatus.textContent =
+        "TX: Complete";
 
-      return;
+
+        txStatus.className =
+        "status green";
+
+
+        log(
+        "TX COMPLETE"
+        );
+
+    },
+    total + 100
+    );
+
+}
+
+
+
+/* ===============================
+   STOP TX
+================================ */
+
+function stopTX(){
+
+    txRunning =
+    false;
+
+
+    if(txOscillator){
+
+        try{
+            txOscillator.stop();
+        }catch(e){}
+
+        txOscillator.disconnect();
+
+        txOscillator =
+        null;
+
+    }
+
+
+    if(txGain){
+
+        txGain.disconnect();
+
+        txGain =
+        null;
+
+    }
+
+
+    txProgress.style.width =
+    "0%";
+
+
+    txStatus.textContent =
+    "TX: Stopped";
+
+
+    txStatus.className =
+    "status yellow";
+
+}
+
+
+
+/* ===============================
+   SPEECH RECOGNITION
+================================ */
+
+document
+.getElementById("speakButton")
+.onclick = function(){
+
+    const SpeechRecognition =
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition;
+
+
+    if(!SpeechRecognition){
+
+        alert(
+            "Speech Recognition is not supported in this browser."
+        );
+
+        return;
+    }
+
+
+    const recognition =
+    new SpeechRecognition();
+
+
+    recognition.lang =
+    "en-US";
+
+
+    recognition.interimResults =
+    true;
+
+
+    recognition.continuous =
+    false;
+
+
+    recognition.onstart =
+    ()=>{
+
+        txStatus.textContent =
+        "TX: Listening to speech...";
+
+    };
+
+
+    recognition.onresult =
+    event=>{
+
+        let text = "";
+
+
+        for(
+            let i=event.resultIndex;
+            i<event.results.length;
+            i++
+        ){
+
+            text +=
+            event.results[i][0].transcript;
+
+        }
+
+
+        txText.value =
+        text;
+
+
+        if(
+            event.results[
+                event.results.length-1
+            ].isFinal
+        ){
+
+            txStatus.textContent =
+            "TX: Speech recognized";
+
+        }
+
+    };
+
+
+    recognition.onerror =
+    event=>{
+
+        txStatus.textContent =
+        "TX Speech Error: " +
+        event.error;
+
+        txStatus.className =
+        "status red";
+
+    };
+
+
+    recognition.start();
+
+};
+
+
+
+/* ===============================
+   RECEIVER
+================================ */
+
+async function startReceiver(){
+
+    if(rxRunning)
+    return;
+
+
+    try{
+
+        const ctx =
+        await getAudio();
+
+
+        micStream =
+        await navigator.mediaDevices
+        .getUserMedia({
+
+            audio:{
+                channelCount:1,
+
+                echoCancellation:false,
+
+                noiseSuppression:false,
+
+                autoGainControl:false
+            }
+
+        });
+
+
+        micSource =
+        ctx.createMediaStreamSource(
+            micStream
+        );
+
+
+        analyser =
+        ctx.createAnalyser();
+
+
+        /*
+           Large FFT for better
+           ultrasonic frequency resolution.
+        */
+
+        analyser.fftSize =
+        8192;
+
+
+        analyser.smoothingTimeConstant =
+        0;
+
+
+        micSource.connect(
+        analyser
+        );
+
+
+        rxRunning =
+        true;
+
+
+        rxStatus.textContent =
+        "RX: Listening";
+
+
+        rxStatus.className =
+        "status green";
+
+
+        log(
+        "RX START — microphone active"
+        );
+
+
+        /*
+           Reset decoder
+        */
+
+        receivingBits =
+        [];
+
+
+        receiving =
+        false;
+
+
+        lastDetectedBit =
+        null;
+
+
+        lastBitStart =
+        performance.now();
+
+
+        runReceiverDSP();
+
+
+    }catch(error){
+
+        rxStatus.textContent =
+        "RX: Microphone error";
+
+
+        rxStatus.className =
+        "status red";
+
+
+        log(
+        "RX ERROR: " +
+        error.message
+        );
+
+    }
+
+}
+
+
+
+/* ===============================
+   STOP RECEIVER
+================================ */
+
+function stopReceiver(){
+
+    rxRunning =
+    false;
+
+
+    if(rxLoop){
+
+        cancelAnimationFrame(
+            rxLoop
+        );
+
+        rxLoop =
+        null;
+
+    }
+
+
+    if(micStream){
+
+        micStream
+        .getTracks()
+        .forEach(
+            track =>
+            track.stop()
+        );
+
+        micStream =
+        null;
+
+    }
+
+
+    if(micSource){
+
+        micSource.disconnect();
+
+        micSource =
+        null;
+
+    }
+
+
+    analyser =
+    null;
+
+
+    rxStatus.textContent =
+    "RX: Stopped";
+
+
+    rxStatus.className =
+    "status yellow";
+
+
+    log(
+    "RX STOPPED"
+    );
+
+}
+
+
+
+/* ===============================
+   FIND FREQUENCY ENERGY
+================================ */
+
+function detectFrequency(
+    buffer,
+    sampleRate,
+    target
+){
+
+    let real = 0;
+
+    let imag = 0;
+
+
+    const omega =
+    2 *
+    Math.PI *
+    target /
+    sampleRate;
+
+
+    for(
+        let i=0;
+        i<buffer.length;
+        i++
+    ){
+
+        const angle =
+        omega * i;
+
+
+        real +=
+        buffer[i] *
+        Math.cos(angle);
+
+
+        imag +=
+        buffer[i] *
+        Math.sin(angle);
+
+    }
+
+
+    return Math.sqrt(
+        real*real +
+        imag*imag
+    ) /
+    buffer.length;
+
+}
+
+
+
+/* ===============================
+   RECEIVER DSP
+================================ */
+
+function runReceiverDSP(){
+
+    if(!rxRunning)
+    return;
+
+
+    const buffer =
+    new Float32Array(
+        analyser.fftSize
+    );
+
+
+    analyser.getFloatTimeDomainData(
+        buffer
+    );
+
+
+    const sampleRate =
+    analyser.context.sampleRate;
+
+
+    const A =
+    Number(freqA.value);
+
+
+    const B =
+    Number(freqB.value);
+
+
+    const energyA =
+    detectFrequency(
+        buffer,
+        sampleRate,
+        A
+    );
+
+
+    const energyB =
+    detectFrequency(
+        buffer,
+        sampleRate,
+        B
+    );
+
+
+    /*
+       Noise gate.
+
+       The threshold may need calibration
+       depending on microphone.
+    */
+
+    const threshold =
+    0.008;
+
+
+    let detected =
+    null;
+
+
+    if(
+        energyA > threshold ||
+        energyB > threshold
+    ){
+
+        if(
+            energyA > energyB
+        ){
+
+            detected = 0;
+
+        }else{
+
+            detected = 1;
+
+        }
+
     }
 
 
     /*
-      Take one packet
+       Display live detection
+    */
+
+    if(detected !== null){
+
+        rxStatus.textContent =
+        "RX: Ultrasonic signal detected — bit " +
+        detected;
+
+    }else{
+
+        rxStatus.textContent =
+        "RX: Listening...";
+
+    }
+
+
+    /*
+       Bit timing.
+
+       We sample once per bit period.
+    */
+
+    const now =
+    performance.now();
+
+
+    const duration =
+    Number(bitTime.value);
+
+
+    if(
+        detected !== null &&
+        now - lastBitStart >= duration
+    ){
+
+        receivingBits.push(
+            detected
+        );
+
+
+        lastBitStart =
+        now;
+
+
+        decodeIncomingBits();
+
+    }
+
+
+    rxLoop =
+    requestAnimationFrame(
+        runReceiverDSP
+    );
+
+}
+
+
+
+/* ===============================
+   BIT ARRAY → BYTE
+================================ */
+
+function readByte(
+    bits,
+    index
+){
+
+    if(
+        index + 8 >
+        bits.length
+    ){
+
+        return null;
+
+    }
+
+
+    let value =
+    0;
+
+
+    for(
+        let i=0;
+        i<8;
+        i++
+    ){
+
+        value =
+        (
+            value << 1
+        ) |
+        bits[
+            index+i
+        ];
+
+    }
+
+
+    return value;
+
+}
+
+
+
+/* ===============================
+   SEARCH PREAMBLE
+================================ */
+
+function findPreamble(bits){
+
+    const preamble =
+    [
+        1,0,1,0,1,0,1,0,
+        1,0,1,0,1,0,1,0,
+        1,0,1,0,1,0,1,0
+    ];
+
+
+    for(
+        let i=0;
+        i<=bits.length-preamble.length;
+        i++
+    ){
+
+        let match =
+        true;
+
+
+        for(
+            let j=0;
+            j<preamble.length;
+            j++
+        ){
+
+            if(
+                bits[i+j] !==
+                preamble[j]
+            ){
+
+                match =
+                false;
+
+                break;
+
+            }
+
+        }
+
+
+        if(match){
+
+            return i;
+
+        }
+
+    }
+
+
+    return -1;
+
+}
+
+
+
+/* ===============================
+   DECODE
+================================ */
+
+function decodeIncomingBits(){
+
+    if(
+        receivingBits.length <
+        50
+    ){
+
+        return;
+
+    }
+
+
+    const start =
+    findPreamble(
+        receivingBits
+    );
+
+
+    if(start < 0){
+
+        /*
+           Keep only recent data
+        */
+
+        if(
+            receivingBits.length >
+            2000
+        ){
+
+            receivingBits =
+            receivingBits.slice(
+                -500
+            );
+
+        }
+
+        return;
+
+    }
+
+
+    /*
+       After preamble:
+
+       8 bits START
+       8 bits LENGTH
+    */
+
+    let index =
+    start + 32;
+
+
+    const startByte =
+    readByte(
+        receivingBits,
+        index
+    );
+
+
+    if(startByte !== 0xF0){
+
+        receivingBits =
+        receivingBits.slice(
+            start + 1
+        );
+
+        return;
+
+    }
+
+
+    index += 8;
+
+
+    const length =
+    readByte(
+        receivingBits,
+        index
+    );
+
+
+    if(
+        length === null ||
+        length > 255
+    ){
+
+        return;
+
+    }
+
+
+    index += 8;
+
+
+    const needed =
+    length * 8;
+
+
+    if(
+        receivingBits.length <
+        index +
+        needed +
+        8 +
+        8
+    ){
+
+        return;
+
+    }
+
+
+    const payloadBytes =
+    [];
+
+
+    for(
+        let i=0;
+        i<length;
+        i++
+    ){
+
+        const byte =
+        readByte(
+            receivingBits,
+            index
+        );
+
+
+        payloadBytes.push(
+            byte
+        );
+
+
+        index += 8;
+
+    }
+
+
+    /*
+       Checksum
+    */
+
+    const receivedChecksum =
+    readByte(
+        receivingBits,
+        index
+    );
+
+
+    index += 8;
+
+
+    /*
+       END marker
     */
 
     const end =
-      Math.min(
-        position + size,
-        data.length
-      );
+    readByte(
+        receivingBits,
+        index
+    );
 
 
-    const packet =
-      data.slice(
-        position,
-        end
-      );
+    if(
+        end !== 0x0F
+    ){
 
+        receivingBits =
+        receivingBits.slice(
+            start + 1
+        );
 
-    position = end;
-
-    sent++;
-
-
-    /*
-      Calculate realistic
-      transmission time.
-
-      +8 bytes = simulated
-      header / control overhead
-    */
-
-    const bits =
-      (packet.length + 8) * 8;
-
-
-    const transmissionTime =
-      (bits / bitsPerSecond) * 1000;
-
-
-    /*
-      Simulate packet loss
-    */
-
-    const isLost =
-      Math.random() <
-      lossProbability;
-
-
-    if (isLost) {
-
-      dropped++;
-
-
-      addLog(
-        "PACKET " +
-        sent +
-        " → DROPPED",
-        "drop"
-      );
-
-    } else {
-
-      received++;
-
-
-      const decoder =
-        new TextDecoder();
-
-
-      const decoded =
-        decoder.decode(packet);
-
-
-      totalBytes +=
-        packet.length;
-
-
-      /*
-        This is what the
-        UCP OLED receives
-      */
-
-      screen.textContent =
-        decoded;
-
-
-      addLog(
-        "PACKET " +
-        sent +
-        " → RX | " +
-        packet.length +
-        " bytes | " +
-        decoded.replace(
-          /\n/g,
-          " ↵ "
-        ),
-        "rx"
-      );
+        return;
 
     }
 
 
     /*
-      Progress
+       Verify checksum
     */
 
-    const progress =
-      position /
-      data.length *
-      100;
+    const calculated =
+    checksum(
+        payloadBytes
+    );
 
 
-    progressBar.style.width =
-      progress + "%";
+    if(
+        calculated !==
+        receivedChecksum
+    ){
 
+        log(
+        "RX: CHECKSUM ERROR"
+        );
 
-    updateStats();
+        receivingBits =
+        receivingBits.slice(
+            start + 1
+        );
+
+        return;
+
+    }
 
 
     /*
-      Schedule next packet
-
-      This is important:
-      we're NOT sending every
-      character individually.
-
-      We're sending PACKETS.
+       Decode UTF-8
     */
 
-    timer =
-      setTimeout(
-        sendNextPacket,
-        Math.max(
-          1,
-          transmissionTime
-        )
-      );
+    try{
 
-  }
-
-
-  sendNextPacket();
-
-};
+        const text =
+        new TextDecoder()
+        .decode(
+            new Uint8Array(
+                payloadBytes
+            )
+        );
 
 
-/* -------------------------
-   STOP
-------------------------- */
+        /*
+           SUCCESS
+        */
 
-stopButton.onclick = function () {
+        screen.textContent =
+        text;
 
-  running = false;
 
-  clearTimeout(timer);
+        document
+        .getElementById("byteCount")
+        .textContent =
+        payloadBytes.length;
 
-  addLog(
-    "TRANSMISSION STOPPED",
-    "drop"
-  );
 
-};
+        document
+        .getElementById("messageCount")
+        .textContent =
+        Number(
+            document
+            .getElementById("messageCount")
+            .textContent
+        ) + 1;
+
+
+        log(
+        "RX MESSAGE: " +
+        text
+        );
+
+
+        /*
+           Remove processed packet
+        */
+
+        receivingBits =
+        receivingBits.slice(
+            index + 8
+        );
+
+
+        /*
+           Restart receiver state
+        */
+
+        receiving =
+        false;
+
+
+    }catch(error){
+
+        log(
+        "RX DECODE ERROR"
+        );
+
+    }
+
+}
+
+
+
+/* ===============================
+   BUTTONS
+================================ */
+
+document
+.getElementById("sendButton")
+.onclick =
+transmit;
+
+
+document
+.getElementById("stopTx")
+.onclick =
+stopTX;
+
+
+document
+.getElementById("startRx")
+.onclick =
+startReceiver;
+
+
+document
+.getElementById("stopRx")
+.onclick =
+stopReceiver;
 
 
 </script>
