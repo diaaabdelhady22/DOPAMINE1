@@ -2,535 +2,227 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>UCP Real Ultrasonic Communication</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>UCP - Pulse Width Test</title>
 
 <style>
-*{box-sizing:border-box}
+*{
+    box-sizing:border-box;
+}
 
 body{
     margin:0;
-    background:#0b0f14;
-    color:#f1f5f9;
+    background:#111;
+    color:#fff;
     font-family:Arial,sans-serif;
 }
 
 .container{
-    width:min(1200px,94%);
-    margin:25px auto;
+    max-width:900px;
+    margin:auto;
+    padding:25px;
 }
 
 h1{
     margin-bottom:5px;
 }
 
-.sub{
-    color:#9ba7b4;
-    line-height:1.6;
-}
-
-.grid{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:18px;
-    margin-top:22px;
+.subtitle{
+    color:#aaa;
+    margin-bottom:25px;
 }
 
 .card{
-    background:#141a21;
-    border:1px solid #293541;
-    border-radius:14px;
+    background:#1b1b1b;
+    border:1px solid #333;
     padding:20px;
+    margin-bottom:18px;
+    border-radius:12px;
 }
 
 h2{
     margin-top:0;
 }
 
-textarea{
+input{
     width:100%;
-    min-height:130px;
-    resize:vertical;
-    background:#080c10;
-    color:#fff;
-    border:1px solid #303b47;
-    border-radius:9px;
-    padding:12px;
-    font:inherit;
+    padding:14px;
+    font-size:17px;
+    background:#0d0d0d;
+    color:white;
+    border:1px solid #444;
+    border-radius:8px;
+    outline:none;
 }
 
 button{
+    padding:13px 18px;
+    margin:7px 5px 0 0;
     border:0;
-    border-radius:9px;
-    padding:12px 17px;
-    margin-top:12px;
-    cursor:pointer;
-    font-weight:bold;
-}
-
-.primary{
+    border-radius:8px;
     background:#fff;
     color:#111;
+    font-weight:bold;
+    cursor:pointer;
 }
 
-.secondary{
-    background:#343e49;
-    color:#fff;
+button:hover{
+    opacity:.85;
 }
 
-.danger{
-    background:#642f35;
+button.stop{
+    background:#b22;
     color:#fff;
 }
 
 .status{
     margin-top:15px;
-    padding:11px;
+    padding:15px;
+    background:#080808;
     border-radius:8px;
-    background:#080c10;
-    border:1px solid #293541;
+    min-height:50px;
+    white-space:pre-wrap;
     font-family:monospace;
 }
 
-.green{
-    color:#8dff8d;
-}
-
-.yellow{
-    color:#ffd477;
-}
-
-.red{
-    color:#ff8585;
-}
-
-.screen{
-    min-height:190px;
-    padding:20px;
-    background:#020602;
-    border:5px solid #282e34;
+.meter{
+    height:20px;
+    background:#080808;
     border-radius:10px;
-    color:#8cff8c;
-    font-family:monospace;
-    font-size:25px;
-    word-break:break-word;
-    direction:ltr;
-    text-align:left;
-}
-
-.row{
-    display:flex;
-    gap:10px;
-    flex-wrap:wrap;
-}
-
-.info{
-    margin-top:12px;
-    color:#8996a4;
-    font-size:13px;
-    line-height:1.6;
-}
-
-.log{
-    margin-top:15px;
-    height:240px;
-    overflow:auto;
-    padding:12px;
-    background:#080c10;
-    border:1px solid #293541;
-    border-radius:9px;
-    font-family:monospace;
-    font-size:13px;
-    direction:ltr;
-    text-align:left;
-}
-
-.controls{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:10px;
-    margin-top:14px;
-}
-
-.control{
-    background:#0a0f14;
-    border:1px solid #293541;
-    border-radius:9px;
-    padding:12px;
-}
-
-.control label{
-    display:block;
-    color:#98a5b3;
-    font-size:13px;
-    margin-bottom:7px;
-}
-
-input{
-    width:100%;
-    background:#05090d;
-    border:1px solid #303b47;
-    border-radius:7px;
-    padding:9px;
-    color:#fff;
-}
-
-.bar{
-    margin-top:14px;
-    height:7px;
-    background:#252e37;
-    border-radius:20px;
     overflow:hidden;
+    margin-top:10px;
 }
 
-.bar div{
+.meterFill{
     height:100%;
-    width:0;
-    background:#ddd;
+    width:0%;
+    background:#fff;
+    transition:width .05s linear;
 }
 
-.arch{
-    margin-top:20px;
+.result{
+    font-size:25px;
     padding:20px;
-    background:#141a21;
-    border:1px solid #293541;
-    border-radius:14px;
-    text-align:center;
-}
-
-.arch span{
-    display:inline-block;
-    padding:10px 13px;
-    margin:4px;
-    background:#080c10;
-    border:1px solid #303b47;
+    background:#080808;
     border-radius:8px;
+    min-height:70px;
+    word-break:break-word;
 }
 
-@media(max-width:800px){
-    .grid{
-        grid-template-columns:1fr;
-    }
-
-    .controls{
-        grid-template-columns:1fr;
-    }
+.bitbox{
+    font-family:monospace;
+    font-size:18px;
+    line-height:1.6;
+    word-break:break-all;
+    color:#ddd;
 }
 </style>
 </head>
-
 
 <body>
 
 <div class="container">
 
-<h1>UCP Real Ultrasonic Communication</h1>
-
-<div class="sub">
-Device 1 converts speech/text into digital data and transmits it using a real ultrasonic carrier.
-Device 2 listens with its microphone, demodulates the ultrasonic signal and reconstructs the original text.
+<h1>UCP — Pulse Width Test</h1>
+<div class="subtitle">
+Single ultrasonic carrier + pulse-width data encoding
 </div>
 
+<!-- TRANSMITTER -->
 
-<div class="grid">
+<div class="card">
 
+<h2>1. Transmitter</h2>
 
-<!-- =====================================================
-     TRANSMITTER
-===================================================== -->
+<input
+    id="message"
+    value="HELLO UCP"
+    placeholder="Type message..."
+>
 
-<section class="card">
+<br>
 
-<h2>TRANSMITTER — Device 1</h2>
-
-<textarea
-id="txText"
-placeholder="Type the message here...">HELP I NEED ASSISTANCE</textarea>
-
-
-<div class="row">
-
-<button
-id="speakButton"
-class="primary">
-USE MICROPHONE / SPEECH
+<button onclick="startAudio()">
+START AUDIO
 </button>
 
-<button
-id="sendButton"
-class="primary">
+<button onclick="sendMessage()">
 SEND ULTRASONIC
 </button>
 
-<button
-id="stopTx"
-class="danger">
+<button class="stop" onclick="stopTransmit()">
 STOP
 </button>
 
+<div class="status" id="txStatus">
+Transmitter idle.
 </div>
 
-
-<div class="controls">
-
-<div class="control">
-
-<label>
-Ultrasonic frequency A
-</label>
-
-<input
-id="freqA"
-type="number"
-value="21000">
-
-</div>
-
-
-<div class="control">
-
-<label>
-Ultrasonic frequency B
-</label>
-
-<input
-id="freqB"
-type="number"
-value="23000">
-
-</div>
-
-
-<div class="control">
-
-<label>
-Bit duration (ms)
-</label>
-
-<input
-id="bitTime"
-type="number"
-value="12">
-
-</div>
-
-
-<div class="control">
-
-<label>
-Volume
-</label>
-
-<input
-id="volume"
-type="number"
-value="0.8"
-min="0.05"
-max="1"
-step="0.05">
-
+<div class="bitbox" id="txBits">
+Bits: -
 </div>
 
 </div>
 
 
-<div
-id="txStatus"
-class="status">
-TX: Ready
-</div>
+<!-- RECEIVER -->
 
+<div class="card">
 
-<div class="bar">
-<div id="txProgress"></div>
-</div>
+<h2>2. Receiver</h2>
 
-
-<div class="info">
-
-Protocol:
-
-<br>
-
-<strong>FSK</strong>
-
-<br>
-
-BIT 0 → Frequency A
-
-<br>
-
-BIT 1 → Frequency B
-
-<br>
-
-The ultrasonic signal carries the encoded text.
-
-</div>
-
-</section>
-
-
-
-<!-- =====================================================
-     RECEIVER
-===================================================== -->
-
-<section class="card">
-
-<h2>RECEIVER — Device 2</h2>
-
-<button
-id="startRx"
-class="primary">
+<button onclick="startReceiver()">
 START MICROPHONE
 </button>
 
-<button
-id="stopRx"
-class="secondary">
-STOP LISTENING
+<button onclick="calibrate()">
+CALIBRATE SILENCE
 </button>
 
+<button class="stop" onclick="stopReceiver()">
+STOP MICROPHONE
+</button>
 
-<div
-id="rxStatus"
-class="status">
-RX: Waiting for microphone
+<div class="status" id="rxStatus">
+Receiver idle.
 </div>
 
-
-<div style="margin-top:15px">
-
-<div
-id="screen"
-class="screen">
-
-UCP READY
+<div class="meter">
+<div class="meterFill" id="meter"></div>
+</div>
 
 <br>
 
-<span
-style="font-size:14px;color:#536053">
-
-Waiting for ultrasonic message...
-
-</span>
-
+<div class="status">
+Detected pulses:
+<span id="pulseInfo">0</span>
 </div>
 
 </div>
 
 
-<div class="controls">
+<!-- RESULT -->
 
-<div class="control">
+<div class="card">
 
-<label>
-Detected frequency A
-</label>
+<h2>3. Decoded message</h2>
 
-<div id="detA">
-21 kHz
-</div>
-
-</div>
-
-<div class="control">
-
-<label>
-Detected frequency B
-</label>
-
-<div id="detB">
-23 kHz
-</div>
-
+<div class="result" id="result">
+Waiting...
 </div>
 
 </div>
 
 
-<div class="info">
+<!-- DEBUG -->
 
-The receiver does NOT use normal speech recognition.
+<div class="card">
 
-It detects the ultrasonic carrier, determines whether each bit is 0 or 1,
-reconstructs the bytes, validates the packet, then displays the original message.
+<h2>Debug</h2>
 
+<div class="status" id="debug">
+No data.
 </div>
-
-</section>
-
-</div>
-
-
-
-<!-- =====================================================
-     LOG
-===================================================== -->
-
-<section
-class="card"
-style="margin-top:18px">
-
-<h2>Live Communication Log</h2>
-
-<div
-id="log"
-class="log">
-
-UCP system ready.
-
-</div>
-
-</section>
-
-
-
-<!-- =====================================================
-     ARCHITECTURE
-===================================================== -->
-
-<div class="arch">
-
-<span>Speech</span>
-
-<span>→</span>
-
-<span>Text</span>
-
-<span>→</span>
-
-<span>Bytes</span>
-
-<span>→</span>
-
-<span>FSK</span>
-
-<span>→</span>
-
-<span>21/23 kHz</span>
-
-<span>→</span>
-
-<span>Air</span>
-
-<span>→</span>
-
-<span>Microphone</span>
-
-<span>→</span>
-
-<span>FFT</span>
-
-<span>→</span>
-
-<span>Bits</span>
-
-<span>→</span>
-
-<span>Text</span>
 
 </div>
 
@@ -540,862 +232,560 @@ UCP system ready.
 <script>
 
 /*
-==========================================================
- UCP REAL ULTRASONIC LINK
+========================================================
+UCP PULSE WIDTH PROTOCOL
+========================================================
 
- Device 1:
+Carrier:
+    20.5 kHz
 
- Speech/Text
-     ↓
- UTF-8
-     ↓
- Packet
-     ↓
- FSK
-     ↓
- Ultrasonic
+Pulse encoding:
 
- Device 2:
+    0 = 45 ms carrier
+    1 = 90 ms carrier
 
- Microphone
-     ↓
- FFT
-     ↓
- Detect 21/23 kHz
-     ↓
- Bits
-     ↓
- Packet
-     ↓
- UTF-8
-     ↓
- Text
-==========================================================
+Gap:
+    55 ms
+
+Sync:
+    8 pulses
+
+    short
+    long
+    short
+    long
+    short
+    long
+    short
+    long
+
+Packet:
+
+    SYNC
+    0xAA
+    LENGTH
+    DATA
+    CHECKSUM
+    0x55
+
+========================================================
 */
 
 
-let audioContext = null;
-
-
-/* ===============================
-   TRANSMITTER
+/* ================================
+   CONFIG
 ================================ */
+
+const CARRIER = 20500;
+
+// Pulse lengths
+const SHORT_PULSE = 45;
+const LONG_PULSE  = 90;
+
+// Gap between pulses
+const GAP = 55;
+
+// Tolerance when measuring pulse width
+const WIDTH_TOLERANCE = 22;
+
+// Receiver threshold multiplier
+const THRESHOLD_MULTIPLIER = 2.5;
+
+
+/* ================================
+   GLOBALS
+================================ */
+
+let audioContext = null;
 
 let txOscillator = null;
 let txGain = null;
-let txRunning = false;
 
-
-/* ===============================
-   RECEIVER
-================================ */
-
-let micStream = null;
-let micSource = null;
+let receiverStream = null;
+let receiverSource = null;
 let analyser = null;
+let receiverRunning = false;
 
-let rxRunning = false;
+let receiverLoop = null;
 
-let rxLoop = null;
+let noiseLevel = 0.0001;
+
+let pulseActive = false;
+let pulseStart = 0;
+
+let detectedPulses = [];
+
+let syncBuffer = [];
+
+let currentBits = [];
+
+let receivingPacket = false;
+
+let lastPulseTime = 0;
 
 
-/* ===============================
-   RECEIVER DECODER
+/* ================================
+   UI
 ================================ */
 
-let receivingBits = [];
-
-let receiving = false;
-
-let lastDetectedBit = null;
-
-let lastBitStart = 0;
-
-
-/* ===============================
-   DOM
-================================ */
-
-const txText =
-document.getElementById("txText");
-
-const freqA =
-document.getElementById("freqA");
-
-const freqB =
-document.getElementById("freqB");
-
-const bitTime =
-document.getElementById("bitTime");
-
-const volume =
-document.getElementById("volume");
-
-const txStatus =
-document.getElementById("txStatus");
-
-const rxStatus =
-document.getElementById("rxStatus");
-
-const screen =
-document.getElementById("screen");
-
-const logBox =
-document.getElementById("log");
-
-const txProgress =
-document.getElementById("txProgress");
+const txStatus = document.getElementById("txStatus");
+const rxStatus = document.getElementById("rxStatus");
+const result = document.getElementById("result");
+const debug = document.getElementById("debug");
+const meter = document.getElementById("meter");
+const pulseInfo = document.getElementById("pulseInfo");
+const txBits = document.getElementById("txBits");
 
 
+function setTX(text){
+    txStatus.textContent = text;
+}
 
-/* ===============================
-   AUDIO CONTEXT
-================================ */
+function setRX(text){
+    rxStatus.textContent = text;
+}
 
-async function getAudio(){
-
-    if(!audioContext){
-
-        audioContext =
-        new (
-            window.AudioContext ||
-            window.webkitAudioContext
-        )();
-
-    }
-
-    if(
-        audioContext.state ===
-        "suspended"
-    ){
-
-        await audioContext.resume();
-
-    }
-
-    return audioContext;
+function setDebug(text){
+    debug.textContent = text;
 }
 
 
-
-/* ===============================
-   LOG
+/* ================================
+   AUDIO
 ================================ */
 
-function log(text){
+async function startAudio(){
 
-    const line =
-    document.createElement("div");
+    try{
 
-    line.textContent =
-    text;
+        if(!audioContext){
 
-    logBox.appendChild(line);
+            audioContext =
+                new (window.AudioContext ||
+                window.webkitAudioContext)();
 
-    logBox.scrollTop =
-    logBox.scrollHeight;
+        }
+
+        if(audioContext.state === "suspended"){
+            await audioContext.resume();
+        }
+
+        setTX(
+            "Audio ready.\n" +
+            "Carrier = " + CARRIER + " Hz\n" +
+            "Sample rate = " + audioContext.sampleRate
+        );
+
+    }catch(err){
+
+        setTX("Audio error: " + err.message);
+
+    }
+
 }
 
 
-
-/* ===============================
-   TEXT → BYTES
+/* ================================
+   TEXT -> BYTES
 ================================ */
 
 function textToBytes(text){
 
-    return new TextEncoder()
-    .encode(text);
+    return new TextEncoder().encode(text);
 
 }
 
 
-
-/* ===============================
-   BYTE → BITS
+/* ================================
+   CHECKSUM
 ================================ */
 
-function byteToBits(byte){
+function checksum(bytes){
 
-    const result = [];
+    let x = 0;
 
-    for(let i=7;i>=0;i--){
+    for(let i=0;i<bytes.length;i++){
 
-        result.push(
-            (byte >> i) & 1
-        );
+        x ^= bytes[i];
 
     }
 
-    return result;
+    return x;
+
 }
 
 
-
-/* ===============================
-   BYTES → BITS
+/* ================================
+   BYTES -> BITS
 ================================ */
 
 function bytesToBits(bytes){
 
     let bits = [];
 
-    for(
-        const byte of bytes
-    ){
+    for(const byte of bytes){
 
-        bits.push(
-            ...byteToBits(byte)
-        );
+        for(let i=7;i>=0;i--){
+
+            bits.push(
+                (byte >> i) & 1
+            );
+
+        }
 
     }
 
     return bits;
+
 }
 
 
-
-/* ===============================
-   XOR CHECKSUM
+/* ================================
+   BUILD PACKET
 ================================ */
 
-function checksum(bytes){
+function buildPacket(text){
 
-    let result = 0;
+    const data = textToBytes(text);
 
-    for(
-        const byte of bytes
-    ){
+    const packet = [];
 
-        result ^= byte;
+    // START
+    packet.push(0xAA);
 
+    // LENGTH
+    packet.push(data.length);
+
+    // DATA
+    for(const b of data){
+        packet.push(b);
     }
 
-    return result;
+    // CHECKSUM
+    packet.push(checksum(data));
+
+    // END
+    packet.push(0x55);
+
+    return new Uint8Array(packet);
+
 }
 
 
-
-/* ===============================
-   PACKET
+/* ================================
+   SYNC
 ================================ */
 
-function createPacket(text){
+const SYNC_PATTERN = [
+    0,1,0,1,0,1,0,1
+];
 
-    const payload =
-    textToBytes(text);
 
+/* ================================
+   SEND PULSE
+================================ */
 
-    if(
-        payload.length > 255
-    ){
+function createPulse(duration){
 
-        throw new Error(
-            "Message is too long."
+    return new Promise(resolve => {
+
+        if(!audioContext){
+
+            resolve();
+            return;
+
+        }
+
+        const osc =
+            audioContext.createOscillator();
+
+        const gain =
+            audioContext.createGain();
+
+        osc.type = "sine";
+
+        osc.frequency.value = CARRIER;
+
+        /*
+        Small fade in/out.
+        This prevents clicks.
+        */
+
+        const now =
+            audioContext.currentTime;
+
+        const dur =
+            duration / 1000;
+
+        gain.gain.setValueAtTime(
+            0,
+            now
         );
 
-    }
-
-
-    let bits = [];
-
-
-    /*
-       PREAMBLE
-
-       10101010 repeated
-    */
-
-    const preamble =
-    "10101010101010101010101010101010";
-
-
-    for(
-        const c of preamble
-    ){
-
-        bits.push(
-            Number(c)
+        gain.gain.linearRampToValueAtTime(
+            0.8,
+            now + 0.008
         );
 
-    }
+        gain.gain.setValueAtTime(
+            0.8,
+            now + dur - 0.008
+        );
 
+        gain.gain.linearRampToValueAtTime(
+            0,
+            now + dur
+        );
 
-    /*
-       START
-    */
+        osc.connect(gain);
 
-    bits.push(
-        1,1,1,1,
-        0,0,0,0
-    );
+        gain.connect(
+            audioContext.destination
+        );
 
+        osc.start();
 
-    /*
-       LENGTH
-    */
+        osc.stop(
+            now + dur + 0.01
+        );
 
-    bits.push(
-        ...byteToBits(
-            payload.length
-        )
-    );
+        setTimeout(
+            resolve,
+            duration
+        );
 
+    });
 
-    /*
-       DATA
-    */
-
-    bits.push(
-        ...bytesToBits(
-            payload
-        )
-    );
-
-
-    /*
-       CHECKSUM
-    */
-
-    bits.push(
-        ...byteToBits(
-            checksum(payload)
-        )
-    );
-
-
-    /*
-       END
-    */
-
-    bits.push(
-        0,0,0,0,
-        1,1,1,1
-    );
-
-
-    return bits;
 }
 
 
-
-/* ===============================
-   TRANSMIT
+/* ================================
+   SEND ONE BIT
 ================================ */
 
-async function transmit(){
+async function sendBit(bit){
 
-    if(txRunning)
-    return;
+    const duration =
+        bit === 0
+        ? SHORT_PULSE
+        : LONG_PULSE;
 
+    await createPulse(duration);
+
+    await sleep(GAP);
+
+}
+
+
+/* ================================
+   SEND MESSAGE
+================================ */
+
+let transmitting = false;
+
+async function sendMessage(){
+
+    if(transmitting){
+        return;
+    }
+
+    await startAudio();
 
     const text =
-    txText.value.trim();
-
+        document.getElementById("message")
+        .value;
 
     if(!text){
 
-        alert(
-            "Write something first."
-        );
-
+        setTX("Write something first.");
         return;
+
     }
 
+    transmitting = true;
 
-    const ctx =
-    await getAudio();
-
-
-    const A =
-    Number(freqA.value);
-
-
-    const B =
-    Number(freqB.value);
-
-
-    const duration =
-    Number(bitTime.value);
-
-
-    const vol =
-    Number(volume.value);
-
+    const packet =
+        buildPacket(text);
 
     const bits =
-    createPacket(text);
+        bytesToBits(packet);
 
+    txBits.textContent =
+        "Bits: " + bits.join("");
 
-    txRunning =
-    true;
-
-
-    txStatus.textContent =
-    "TX: Transmitting ultrasonic data";
-
-
-    txStatus.className =
-    "status green";
-
-
-    log(
-    "TX START — " +
-    bits.length +
-    " bits"
-    );
-
-
-    log(
-    "FSK: " +
-    A +
-    " Hz / " +
-    B +
-    " Hz"
+    setTX(
+        "Sending...\n" +
+        "Message: " + text + "\n" +
+        "Bytes: " + packet.length + "\n" +
+        "Bits: " + bits.length
     );
 
 
     /*
-       Create oscillator
+    ================================
+    SYNC
+    ================================
     */
 
-    txOscillator =
-    ctx.createOscillator();
+    for(const bit of SYNC_PATTERN){
 
+        if(!transmitting){
+            return;
+        }
 
-    txGain =
-    ctx.createGain();
-
-
-    txOscillator.type =
-    "sine";
-
-
-    txGain.gain.value =
-    0;
-
-
-    txOscillator.connect(
-        txGain
-    );
-
-
-    txGain.connect(
-        ctx.destination
-    );
-
-
-    txOscillator.start();
-
-
-    const start =
-    ctx.currentTime;
-
-
-    /*
-       Schedule bits
-    */
-
-    for(
-        let i=0;
-        i<bits.length;
-        i++
-    ){
-
-        const t =
-        start +
-        (
-            i *
-            duration /
-            1000
-        );
-
-
-        const frequency =
-        bits[i] === 0
-        ? A
-        : B;
-
-
-        txOscillator
-        .frequency
-        .setValueAtTime(
-            frequency,
-            t
-        );
-
-
-        txGain
-        .gain
-        .setValueAtTime(
-            0,
-            t
-        );
-
-
-        txGain
-        .gain
-        .setValueAtTime(
-            vol,
-            t + 0.001
-        );
-
-
-        /*
-           Smooth off at the end
-        */
-
-        txGain
-        .gain
-        .setValueAtTime(
-            0,
-            t +
-            (
-                duration /
-                1000
-            ) -
-            0.001
-        );
-
-
-        txProgress.style.width =
-        (
-            i /
-            bits.length *
-            100
-        ) + "%";
+        await sendBit(bit);
 
     }
 
 
-    const total =
-    bits.length *
-    duration;
+    /*
+    ================================
+    PACKET
+    ================================
+    */
 
+    for(const bit of bits){
 
-    setTimeout(
-    ()=>{
-
-        if(txOscillator){
-
-            try{
-
-                txOscillator.stop();
-
-            }catch(e){}
-
-            txOscillator.disconnect();
-
-            txOscillator =
-            null;
-
+        if(!transmitting){
+            return;
         }
 
+        await sendBit(bit);
 
-        if(txGain){
-
-            txGain.disconnect();
-
-            txGain =
-            null;
-
-        }
+    }
 
 
-        txRunning =
-        false;
+    transmitting = false;
 
-
-        txProgress.style.width =
-        "100%";
-
-
-        txStatus.textContent =
-        "TX: Complete";
-
-
-        txStatus.className =
-        "status green";
-
-
-        log(
-        "TX COMPLETE"
-        );
-
-    },
-    total + 100
+    setTX(
+        "Transmission finished.\n" +
+        "Message: " + text
     );
 
 }
 
 
-
-/* ===============================
+/* ================================
    STOP TX
 ================================ */
 
-function stopTX(){
+function stopTransmit(){
 
-    txRunning =
-    false;
+    transmitting = false;
 
-
-    if(txOscillator){
-
-        try{
-            txOscillator.stop();
-        }catch(e){}
-
-        txOscillator.disconnect();
-
-        txOscillator =
-        null;
-
-    }
-
-
-    if(txGain){
-
-        txGain.disconnect();
-
-        txGain =
-        null;
-
-    }
-
-
-    txProgress.style.width =
-    "0%";
-
-
-    txStatus.textContent =
-    "TX: Stopped";
-
-
-    txStatus.className =
-    "status yellow";
+    setTX("Transmission stopped.");
 
 }
 
 
-
-/* ===============================
-   SPEECH RECOGNITION
+/* ================================
+   SLEEP
 ================================ */
 
-document
-.getElementById("speakButton")
-.onclick = function(){
+function sleep(ms){
 
-    const SpeechRecognition =
-    window.SpeechRecognition ||
-    window.webkitSpeechRecognition;
+    return new Promise(
+        resolve => setTimeout(resolve,ms)
+    );
 
-
-    if(!SpeechRecognition){
-
-        alert(
-            "Speech Recognition is not supported in this browser."
-        );
-
-        return;
-    }
+}
 
 
-    const recognition =
-    new SpeechRecognition();
-
-
-    recognition.lang =
-    "en-US";
-
-
-    recognition.interimResults =
-    true;
-
-
-    recognition.continuous =
-    false;
-
-
-    recognition.onstart =
-    ()=>{
-
-        txStatus.textContent =
-        "TX: Listening to speech...";
-
-    };
-
-
-    recognition.onresult =
-    event=>{
-
-        let text = "";
-
-
-        for(
-            let i=event.resultIndex;
-            i<event.results.length;
-            i++
-        ){
-
-            text +=
-            event.results[i][0].transcript;
-
-        }
-
-
-        txText.value =
-        text;
-
-
-        if(
-            event.results[
-                event.results.length-1
-            ].isFinal
-        ){
-
-            txStatus.textContent =
-            "TX: Speech recognized";
-
-        }
-
-    };
-
-
-    recognition.onerror =
-    event=>{
-
-        txStatus.textContent =
-        "TX Speech Error: " +
-        event.error;
-
-        txStatus.className =
-        "status red";
-
-    };
-
-
-    recognition.start();
-
-};
-
-
-
-/* ===============================
+/* =========================================================
    RECEIVER
+   ========================================================= */
+
+
+/* ================================
+   START RECEIVER
 ================================ */
 
 async function startReceiver(){
 
-    if(rxRunning)
-    return;
-
-
     try{
 
-        const ctx =
-        await getAudio();
+        if(receiverRunning){
+            return;
+        }
+
+        receiverStream =
+            await navigator.mediaDevices
+            .getUserMedia({
+
+                audio:{
+                    echoCancellation:false,
+                    noiseSuppression:false,
+                    autoGainControl:false,
+                    channelCount:1
+                }
+
+            });
 
 
-        micStream =
-        await navigator.mediaDevices
-        .getUserMedia({
+        if(!audioContext){
 
-            audio:{
-                channelCount:1,
+            audioContext =
+                new (window.AudioContext ||
+                window.webkitAudioContext)();
 
-                echoCancellation:false,
+        }
 
-                noiseSuppression:false,
-
-                autoGainControl:false
-            }
-
-        });
+        if(audioContext.state === "suspended"){
+            await audioContext.resume();
+        }
 
 
-        micSource =
-        ctx.createMediaStreamSource(
-            micStream
-        );
+        receiverSource =
+            audioContext.createMediaStreamSource(
+                receiverStream
+            );
 
 
         analyser =
-        ctx.createAnalyser();
-
+            audioContext.createAnalyser();
 
         /*
-           Large FFT for better
-           ultrasonic frequency resolution.
+        FFT size.
+        Larger = better frequency resolution.
         */
 
-        analyser.fftSize =
-        8192;
+        analyser.fftSize = 4096;
 
+        analyser.smoothingTimeConstant = 0.05;
 
-        analyser.smoothingTimeConstant =
-        0;
-
-
-        micSource.connect(
-        analyser
+        receiverSource.connect(
+            analyser
         );
 
 
-        rxRunning =
-        true;
+        receiverRunning = true;
 
+        detectedPulses = [];
 
-        rxStatus.textContent =
-        "RX: Listening";
+        syncBuffer = [];
 
+        currentBits = [];
 
-        rxStatus.className =
-        "status green";
+        receivingPacket = false;
 
-
-        log(
-        "RX START — microphone active"
+        setRX(
+            "Microphone running.\n" +
+            "Listening for " +
+            CARRIER +
+            " Hz..."
         );
 
-
-        /*
-           Reset decoder
-        */
-
-        receivingBits =
-        [];
+        receiverLoop =
+            requestAnimationFrame(
+                processMicrophone
+            );
 
 
-        receiving =
-        false;
+    }catch(err){
 
-
-        lastDetectedBit =
-        null;
-
-
-        lastBitStart =
-        performance.now();
-
-
-        runReceiverDSP();
-
-
-    }catch(error){
-
-        rxStatus.textContent =
-        "RX: Microphone error";
-
-
-        rxStatus.className =
-        "status red";
-
-
-        log(
-        "RX ERROR: " +
-        error.message
+        setRX(
+            "Microphone error:\n" +
+            err.message
         );
 
     }
@@ -1403,414 +793,323 @@ async function startReceiver(){
 }
 
 
-
-/* ===============================
+/* ================================
    STOP RECEIVER
 ================================ */
 
 function stopReceiver(){
 
-    rxRunning =
-    false;
+    receiverRunning = false;
 
-
-    if(rxLoop){
-
+    if(receiverLoop){
         cancelAnimationFrame(
-            rxLoop
+            receiverLoop
         );
-
-        rxLoop =
-        null;
-
     }
 
+    if(receiverStream){
 
-    if(micStream){
-
-        micStream
+        receiverStream
         .getTracks()
-        .forEach(
-            track =>
-            track.stop()
+        .forEach(track => track.stop());
+
+    }
+
+    if(receiverSource){
+        receiverSource.disconnect();
+    }
+
+    if(analyser){
+        analyser.disconnect();
+    }
+
+    setRX("Receiver stopped.");
+
+    meter.style.width = "0%";
+
+}
+
+
+/* ================================
+   FIND FREQUENCY BIN
+================================ */
+
+function getCarrierEnergy(){
+
+    if(!analyser){
+        return 0;
+    }
+
+    const data =
+        new Float32Array(
+            analyser.frequencyBinCount
         );
 
-        micStream =
-        null;
-
-    }
-
-
-    if(micSource){
-
-        micSource.disconnect();
-
-        micSource =
-        null;
-
-    }
-
-
-    analyser =
-    null;
-
-
-    rxStatus.textContent =
-    "RX: Stopped";
-
-
-    rxStatus.className =
-    "status yellow";
-
-
-    log(
-    "RX STOPPED"
-    );
-
-}
-
-
-
-/* ===============================
-   FIND FREQUENCY ENERGY
-================================ */
-
-function detectFrequency(
-    buffer,
-    sampleRate,
-    target
-){
-
-    let real = 0;
-
-    let imag = 0;
-
-
-    const omega =
-    2 *
-    Math.PI *
-    target /
-    sampleRate;
-
-
-    for(
-        let i=0;
-        i<buffer.length;
-        i++
-    ){
-
-        const angle =
-        omega * i;
-
-
-        real +=
-        buffer[i] *
-        Math.cos(angle);
-
-
-        imag +=
-        buffer[i] *
-        Math.sin(angle);
-
-    }
-
-
-    return Math.sqrt(
-        real*real +
-        imag*imag
-    ) /
-    buffer.length;
-
-}
-
-
-
-/* ===============================
-   RECEIVER DSP
-================================ */
-
-function runReceiverDSP(){
-
-    if(!rxRunning)
-    return;
-
-
-    const buffer =
-    new Float32Array(
-        analyser.fftSize
-    );
-
-
-    analyser.getFloatTimeDomainData(
-        buffer
-    );
-
+    analyser.getFloatFrequencyData(data);
 
     const sampleRate =
-    analyser.context.sampleRate;
+        audioContext.sampleRate;
 
-
-    const A =
-    Number(freqA.value);
-
-
-    const B =
-    Number(freqB.value);
-
-
-    const energyA =
-    detectFrequency(
-        buffer,
-        sampleRate,
-        A
-    );
-
-
-    const energyB =
-    detectFrequency(
-        buffer,
-        sampleRate,
-        B
-    );
+    const bin =
+        Math.round(
+            CARRIER *
+            analyser.fftSize /
+            sampleRate
+        );
 
 
     /*
-       Noise gate.
+    Look around carrier frequency.
+    This handles slight frequency differences.
+    */
 
-       The threshold may need calibration
-       depending on microphone.
+    let strongest = -Infinity;
+
+    for(
+        let i = bin - 2;
+        i <= bin + 2;
+        i++
+    ){
+
+        if(i < 0 || i >= data.length){
+            continue;
+        }
+
+        if(data[i] > strongest){
+            strongest = data[i];
+        }
+
+    }
+
+
+    /*
+    Convert dB-ish FFT value
+    into simple 0..1 value.
+    */
+
+    if(!isFinite(strongest)){
+        return 0;
+    }
+
+
+    const linear =
+        Math.pow(
+            10,
+            strongest / 20
+        );
+
+
+    return linear;
+
+}
+
+
+/* ================================
+   MICROPHONE LOOP
+================================ */
+
+function processMicrophone(){
+
+    if(!receiverRunning){
+        return;
+    }
+
+
+    const energy =
+        getCarrierEnergy();
+
+
+    /*
+    Dynamic threshold.
+
+    noiseLevel is measured during calibration.
     */
 
     const threshold =
-    0.008;
+        Math.max(
+            noiseLevel *
+            THRESHOLD_MULTIPLIER,
 
-
-    let detected =
-    null;
-
-
-    if(
-        energyA > threshold ||
-        energyB > threshold
-    ){
-
-        if(
-            energyA > energyB
-        ){
-
-            detected = 0;
-
-        }else{
-
-            detected = 1;
-
-        }
-
-    }
-
-
-    /*
-       Display live detection
-    */
-
-    if(detected !== null){
-
-        rxStatus.textContent =
-        "RX: Ultrasonic signal detected — bit " +
-        detected;
-
-    }else{
-
-        rxStatus.textContent =
-        "RX: Listening...";
-
-    }
-
-
-    /*
-       Bit timing.
-
-       We sample once per bit period.
-    */
-
-    const now =
-    performance.now();
-
-
-    const duration =
-    Number(bitTime.value);
-
-
-    if(
-        detected !== null &&
-        now - lastBitStart >= duration
-    ){
-
-        receivingBits.push(
-            detected
+            0.008
         );
 
 
-        lastBitStart =
-        now;
+    const signal =
+        energy > threshold;
 
 
-        decodeIncomingBits();
+    /*
+    Visual meter
+    */
 
-    }
+    const visual =
+        Math.min(
+            100,
+            energy * 1000
+        );
+
+    meter.style.width =
+        visual + "%";
 
 
-    rxLoop =
-    requestAnimationFrame(
-        runReceiverDSP
-    );
+    /*
+    Pulse START
+    */
 
-}
+    if(signal && !pulseActive){
 
+        pulseActive = true;
 
-
-/* ===============================
-   BIT ARRAY → BYTE
-================================ */
-
-function readByte(
-    bits,
-    index
-){
-
-    if(
-        index + 8 >
-        bits.length
-    ){
-
-        return null;
+        pulseStart =
+            performance.now();
 
     }
 
 
-    let value =
-    0;
+    /*
+    Pulse END
+    */
 
+    if(!signal && pulseActive){
 
-    for(
-        let i=0;
-        i<8;
-        i++
-    ){
+        pulseActive = false;
 
-        value =
-        (
-            value << 1
-        ) |
-        bits[
-            index+i
-        ];
+        const now =
+            performance.now();
 
-    }
-
-
-    return value;
-
-}
-
-
-
-/* ===============================
-   SEARCH PREAMBLE
-================================ */
-
-function findPreamble(bits){
-
-    const preamble =
-    [
-        1,0,1,0,1,0,1,0,
-        1,0,1,0,1,0,1,0,
-        1,0,1,0,1,0,1,0
-    ];
-
-
-    for(
-        let i=0;
-        i<=bits.length-preamble.length;
-        i++
-    ){
-
-        let match =
-        true;
-
-
-        for(
-            let j=0;
-            j<preamble.length;
-            j++
-        ){
-
-            if(
-                bits[i+j] !==
-                preamble[j]
-            ){
-
-                match =
-                false;
-
-                break;
-
-            }
-
-        }
-
-
-        if(match){
-
-            return i;
-
-        }
-
-    }
-
-
-    return -1;
-
-}
-
-
-
-/* ===============================
-   DECODE
-================================ */
-
-function decodeIncomingBits(){
-
-    if(
-        receivingBits.length <
-        50
-    ){
-
-        return;
-
-    }
-
-
-    const start =
-    findPreamble(
-        receivingBits
-    );
-
-
-    if(start < 0){
+        const duration =
+            now - pulseStart;
 
         /*
-           Keep only recent data
+        Ignore extremely short noise.
         */
 
-        if(
-            receivingBits.length >
-            2000
-        ){
+        if(duration > 20){
 
-            receivingBits =
-            receivingBits.slice(
-                -500
+            registerPulse(duration);
+
+        }
+
+    }
+
+
+    receiverLoop =
+        requestAnimationFrame(
+            processMicrophone
+        );
+
+}
+
+
+/* ================================
+   REGISTER PULSE
+================================ */
+
+function registerPulse(duration){
+
+    pulseInfo.textContent =
+        detectedPulses.length + 1;
+
+
+    /*
+    Determine whether
+    pulse is SHORT or LONG.
+    */
+
+    let bit;
+
+
+    if(
+        Math.abs(
+            duration - SHORT_PULSE
+        )
+        <
+        Math.abs(
+            duration - LONG_PULSE
+        )
+    ){
+
+        bit = 0;
+
+    }else{
+
+        bit = 1;
+
+    }
+
+
+    detectedPulses.push({
+        duration,
+        bit,
+        time:performance.now()
+    });
+
+
+    /*
+    Keep latest pulses only.
+    */
+
+    if(
+        detectedPulses.length > 100
+    ){
+
+        detectedPulses.shift();
+
+    }
+
+
+    setDebug(
+        "Pulse detected\n" +
+        "Duration: " +
+        duration.toFixed(1) +
+        " ms\n" +
+        "Decoded: " +
+        bit
+    );
+
+
+    processPulse(bit);
+
+}
+
+
+/* ================================
+   PROCESS PULSE
+================================ */
+
+function processPulse(bit){
+
+    /*
+    First search for SYNC.
+    */
+
+    if(!receivingPacket){
+
+        syncBuffer.push(bit);
+
+
+        if(syncBuffer.length >
+           SYNC_PATTERN.length){
+
+            syncBuffer.shift();
+
+        }
+
+
+        if(arrayEquals(
+            syncBuffer,
+            SYNC_PATTERN
+        )){
+
+            receivingPacket = true;
+
+            currentBits = [];
+
+            syncBuffer = [];
+
+            setRX(
+                "SYNC FOUND!\n" +
+                "Receiving packet..."
             );
 
         }
@@ -1821,134 +1120,117 @@ function decodeIncomingBits(){
 
 
     /*
-       After preamble:
-
-       8 bits START
-       8 bits LENGTH
+    We are inside packet.
     */
 
-    let index =
-    start + 32;
+    currentBits.push(bit);
 
 
-    const startByte =
-    readByte(
-        receivingBits,
-        index
-    );
+    /*
+    Packet structure:
+
+    8 bits  START
+    8 bits  LENGTH
+    DATA
+    8 bits CHECKSUM
+    8 bits END
+    */
 
 
-    if(startByte !== 0xF0){
-
-        receivingBits =
-        receivingBits.slice(
-            start + 1
-        );
-
+    if(currentBits.length < 16){
         return;
-
     }
 
 
-    index += 8;
-
+    /*
+    Read LENGTH.
+    */
 
     const length =
-    readByte(
-        receivingBits,
-        index
-    );
+        bitsToByte(
+            currentBits.slice(8,16)
+        );
 
 
-    if(
-        length === null ||
-        length > 255
-    ){
+    /*
+    Expected number of bits:
 
-        return;
+    START = 8
+    LENGTH = 8
+    DATA = length * 8
+    CHECKSUM = 8
+    END = 8
+    */
 
-    }
-
-
-    index += 8;
-
-
-    const needed =
-    length * 8;
-
-
-    if(
-        receivingBits.length <
-        index +
-        needed +
+    const expected =
         8 +
-        8
-    ){
+        8 +
+        length * 8 +
+        8 +
+        8;
+
+
+    /*
+    Safety.
+    */
+
+    if(length > 200){
+
+        resetPacket();
 
         return;
 
     }
 
 
-    const payloadBytes =
-    [];
+    if(currentBits.length >= expected){
+
+        decodePacket(
+            currentBits.slice(0,expected)
+        );
+
+        resetPacket();
+
+    }
+
+}
+
+
+/* ================================
+   DECODE PACKET
+================================ */
+
+function decodePacket(bits){
+
+    const bytes = [];
 
 
     for(
-        let i=0;
-        i<length;
-        i++
+        let i = 0;
+        i < bits.length;
+        i += 8
     ){
 
-        const byte =
-        readByte(
-            receivingBits,
-            index
+        bytes.push(
+            bitsToByte(
+                bits.slice(i,i+8)
+            )
         );
-
-
-        payloadBytes.push(
-            byte
-        );
-
-
-        index += 8;
 
     }
 
 
-    /*
-       Checksum
-    */
+    const START =
+        bytes[0];
 
-    const receivedChecksum =
-    readByte(
-        receivingBits,
-        index
-    );
+    const length =
+        bytes[1];
 
 
-    index += 8;
+    if(START !== 0xAA){
 
-
-    /*
-       END marker
-    */
-
-    const end =
-    readByte(
-        receivingBits,
-        index
-    );
-
-
-    if(
-        end !== 0x0F
-    ){
-
-        receivingBits =
-        receivingBits.slice(
-            start + 1
+        setRX(
+            "Bad START byte."
         );
 
         return;
@@ -1956,14 +1238,34 @@ function decodeIncomingBits(){
     }
 
 
-    /*
-       Verify checksum
-    */
+    const data =
+        bytes.slice(
+            2,
+            2 + length
+        );
+
+
+    const receivedChecksum =
+        bytes[2 + length];
+
+
+    const END =
+        bytes[3 + length];
+
+
+    if(END !== 0x55){
+
+        setRX(
+            "Bad END byte."
+        );
+
+        return;
+
+    }
+
 
     const calculated =
-    checksum(
-        payloadBytes
-    );
+        checksum(data);
 
 
     if(
@@ -1971,13 +1273,12 @@ function decodeIncomingBits(){
         receivedChecksum
     ){
 
-        log(
-        "RX: CHECKSUM ERROR"
-        );
-
-        receivingBits =
-        receivingBits.slice(
-            start + 1
+        setRX(
+            "CHECKSUM ERROR\n" +
+            "Expected: " +
+            calculated +
+            "\nReceived: " +
+            receivedChecksum
         );
 
         return;
@@ -1985,73 +1286,32 @@ function decodeIncomingBits(){
     }
 
 
-    /*
-       Decode UTF-8
-    */
-
     try{
 
         const text =
-        new TextDecoder()
-        .decode(
-            new Uint8Array(
-                payloadBytes
-            )
+            new TextDecoder()
+            .decode(
+                new Uint8Array(data)
+            );
+
+
+        result.textContent = text;
+
+
+        setRX(
+            "PACKET OK!\n" +
+            "Bytes: " +
+            data.length +
+            "\n" +
+            "Message: " +
+            text
         );
 
 
-        /*
-           SUCCESS
-        */
+    }catch(err){
 
-        screen.textContent =
-        text;
-
-
-        document
-        .getElementById("byteCount")
-        .textContent =
-        payloadBytes.length;
-
-
-        document
-        .getElementById("messageCount")
-        .textContent =
-        Number(
-            document
-            .getElementById("messageCount")
-            .textContent
-        ) + 1;
-
-
-        log(
-        "RX MESSAGE: " +
-        text
-        );
-
-
-        /*
-           Remove processed packet
-        */
-
-        receivingBits =
-        receivingBits.slice(
-            index + 8
-        );
-
-
-        /*
-           Restart receiver state
-        */
-
-        receiving =
-        false;
-
-
-    }catch(error){
-
-        log(
-        "RX DECODE ERROR"
+        setRX(
+            "Text decode error."
         );
 
     }
@@ -2059,34 +1319,146 @@ function decodeIncomingBits(){
 }
 
 
-
-/* ===============================
-   BUTTONS
+/* ================================
+   BITS -> BYTE
 ================================ */
 
-document
-.getElementById("sendButton")
-.onclick =
-transmit;
+function bitsToByte(bits){
+
+    let value = 0;
+
+    for(const bit of bits){
+
+        value =
+            (value << 1) |
+            bit;
+
+    }
+
+    return value;
+
+}
 
 
-document
-.getElementById("stopTx")
-.onclick =
-stopTX;
+/* ================================
+   ARRAY EQUAL
+================================ */
+
+function arrayEquals(a,b){
+
+    if(a.length !== b.length){
+        return false;
+    }
+
+    for(
+        let i=0;
+        i<a.length;
+        i++
+    ){
+
+        if(a[i] !== b[i]){
+            return false;
+        }
+
+    }
+
+    return true;
+
+}
 
 
-document
-.getElementById("startRx")
-.onclick =
-startReceiver;
+/* ================================
+   RESET PACKET
+================================ */
+
+function resetPacket(){
+
+    receivingPacket = false;
+
+    currentBits = [];
+
+    syncBuffer = [];
+
+    setRX(
+        "Waiting for SYNC..."
+    );
+
+}
 
 
-document
-.getElementById("stopRx")
-.onclick =
-stopReceiver;
+/* =========================================================
+   CALIBRATION
+   ========================================================= */
 
+async function calibrate(){
+
+    if(!receiverRunning){
+
+        setRX(
+            "Start microphone first."
+        );
+
+        return;
+
+    }
+
+
+    setRX(
+        "Calibrating...\n" +
+        "Keep the room silent."
+    );
+
+
+    let total = 0;
+
+    const samples = 60;
+
+
+    for(
+        let i=0;
+        i<samples;
+        i++
+    ){
+
+        total += getCarrierEnergy();
+
+        await sleep(25);
+
+    }
+
+
+    noiseLevel =
+        total / samples;
+
+
+    setRX(
+        "Calibration finished.\n" +
+        "Noise level: " +
+        noiseLevel.toFixed(5) +
+        "\nThreshold: " +
+        Math.max(
+            noiseLevel *
+            THRESHOLD_MULTIPLIER,
+            0.008
+        ).toFixed(5)
+    );
+
+}
+
+
+/* ================================
+   INIT
+================================ */
+
+window.addEventListener(
+    "beforeunload",
+    () => {
+
+        stopReceiver();
+        stopTransmit();
+
+    }
+);
 
 </script>
 
