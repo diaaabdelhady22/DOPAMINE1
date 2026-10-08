@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>THE UCP - Chirp Protocol</title>
+    <title>THE UCP - Stable ASCII Protocol</title>
     <style>
         :root {
             --bg: #edf2f7;
@@ -154,7 +154,7 @@
             <div class="brand-badge">UCP</div>
             <div>
                 <h1>THE UCP</h1>
-                <p>CHIRP / ACOUSTIC PACKET PROTOCOL</p>
+                <p>STABLE ACOUSTIC PROTOCOL</p>
             </div>
         </div>
 
@@ -181,11 +181,14 @@
 </div>
 
 <script>
-    // استخدام نطاق ترددات أعمق قليلاً لاستقبال متكافئ عبر كل الهواتف والميكروفونات
-    const F_LOW = 15000;  // التردد الأدنى
-    const F_HIGH = 18000; // التردد الأعلى
-    const CHIRP_DURATION = 0.15; // 150ms لكل نزلاق تردد
-    const PAUSE = 0.05; // 50ms صمت بين الحروف لمنع تداخل الصدى
+    // إعدادات الترددات (نطاق بين 15kHz و 18kHz يسهل لجميع الميكروفونات التقاطه)
+    const BASE_FREQ = 15000;
+    const STEP_FREQ = 25; // 25Hz بين كل حرف وآخر
+    const START_FREQ = 14500; // نغمة بداية
+    const END_FREQ = 18200;   // نغمة نهاية
+
+    const TONE_DURATION = 0.18; // 180ms زمن النغمة
+    const PAUSE_DURATION = 0.08; // 80ms فاصل صمت لمنع الصدى
 
     function showPanel(mode) {
         document.getElementById('sendPanel').classList.toggle('active', mode === 'send');
@@ -194,19 +197,17 @@
         document.getElementById('receiveModeBtn').classList.toggle('active', mode === 'receive');
     }
 
-    // إنشاء صوت Chirp (انزلاق تردد) يمثل القيمة
-    function playChirp(audioCtx, startFreq, endFreq, duration) {
+    function playTone(audioCtx, freq, duration) {
         return new Promise(resolve => {
             let osc = audioCtx.createOscillator();
             let gain = audioCtx.createGain();
 
             osc.type = 'sine';
-            osc.frequency.setValueAtTime(startFreq, audioCtx.currentTime);
-            osc.frequency.linearRampToValueAtTime(endFreq, audioCtx.currentTime + duration);
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
 
             gain.gain.setValueAtTime(0, audioCtx.currentTime);
-            gain.gain.linearRampToValueAtTime(0.7, audioCtx.currentTime + 0.01);
-            gain.gain.setValueAtTime(0.7, audioCtx.currentTime + duration - 0.01);
+            gain.gain.linearRampToValueAtTime(0.6, audioCtx.currentTime + 0.015);
+            gain.gain.setValueAtTime(0.6, audioCtx.currentTime + duration - 0.015);
             gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + duration);
 
             osc.connect(gain);
@@ -215,7 +216,7 @@
             osc.start();
             osc.stop(audioCtx.currentTime + duration);
 
-            setTimeout(resolve, (duration + PAUSE) * 1000);
+            setTimeout(resolve, (duration + PAUSE_DURATION) * 1000);
         });
     }
 
@@ -226,30 +227,31 @@
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         document.getElementById('sendBtn').disabled = true;
 
-        // 1. إرسال Header Chirp (انزلاق كامل من 14kHz لـ 19kHz)
-        await playChirp(audioCtx, 14000, 19000, 0.3);
+        // 1. إرسال نغمة البداية
+        await playTone(audioCtx, START_FREQ, 0.25);
 
-        // 2. إرسال كل حرف كنغمتين انزلاقيتين (Base-16 Chirps)
-        for (let char of text) {
-            let code = char.charCodeAt(0);
-            let highNibble = (code >> 4) & 0x0F; // النصف الأول من البايت
-            let lowNibble = code & 0x0F;        // النصف الثاني من البايت
-
-            // تحويل النصفين لترددات انزلاقية محددة
-            let f1 = F_LOW + (highNibble * 180);
-            let f2 = F_LOW + (lowNibble * 180);
-
-            await playChirp(audioCtx, f1, f1 + 250, CHIRP_DURATION);
-            await playChirp(audioCtx, f2, f2 + 250, CHIRP_DURATION);
+        // 2. إرسال كل حرف بتردد مستقل مباشر
+        for (let i = 0; i < text.length; i++) {
+            let code = text.charCodeAt(i);
+            // حصر نطاق ASCII للتأكد من الصحة
+            if (code >= 32 && code <= 126) {
+                let freq = BASE_FREQ + ((code - 32) * STEP_FREQ);
+                await playTone(audioCtx, freq, TONE_DURATION);
+            }
         }
+
+        // 3. إرسال نغمة النهاية
+        await playTone(audioCtx, END_FREQ, 0.20);
 
         document.getElementById('sendBtn').disabled = false;
     }
 
-    // --- المستقبل ---
+    // --- المستقبل المطور ---
     let isListening = false;
     let audioContext, analyser, stream;
-    let nibblesBuffer = [];
+    let lastCharCode = -1;
+    let charMatchCount = 0;
+    let isReceiving = false;
 
     async function startListening() {
         if (isListening) return;
@@ -266,7 +268,7 @@
 
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
             analyser = audioContext.createAnalyser();
-            analyser.fftSize = 2048;
+            analyser.fftSize = 4096; // رفع الدقة لتحديد التردد بدقة 10Hz
 
             let source = audioContext.createMediaStreamSource(stream);
             source.connect(analyser);
@@ -283,8 +285,6 @@
         }
     }
 
-    let lastDetectedTime = 0;
-
     function processAudio() {
         if (!isListening) return;
 
@@ -295,7 +295,11 @@
         let maxVal = 0;
         let maxIndex = -1;
 
-        for (let i = 0; i < bufferLength; i++) {
+        // البحث في نطاق التردد الخاص بنا فقط
+        let minBin = Math.floor((14000 * bufferLength) / (audioContext.sampleRate / 2));
+        let maxBin = Math.ceil((18500 * bufferLength) / (audioContext.sampleRate / 2));
+
+        for (let i = minBin; i <= maxBin; i++) {
             if (dataArray[i] > maxVal) {
                 maxVal = dataArray[i];
                 maxIndex = i;
@@ -304,26 +308,41 @@
 
         let nyquist = audioContext.sampleRate / 2;
         let freq = maxIndex * nyquist / bufferLength;
-        const now = performance.now();
 
-        // التقاط الترددات بفاصل زمني يمنع التكرار (Debounce)
-        if (maxVal > 45 && freq >= F_LOW && freq <= F_HIGH + 500) {
-            if (now - lastDetectedTime > (CHIRP_DURATION * 1000 * 0.7)) {
-                let nibble = Math.round((freq - F_LOW) / 180);
-                if (nibble >= 0 && nibble <= 15) {
-                    nibblesBuffer.push(nibble);
-                    lastDetectedTime = now;
+        // عتبة قوة الصوت (Threshold) لتجاهل الضوضاء
+        if (maxVal > 45) {
+            // فحص نغمة البداية
+            if (Math.abs(freq - START_FREQ) < 100) {
+                isReceiving = true;
+                lastCharCode = -1;
+                charMatchCount = 0;
+            } 
+            // فحص نغمة النهاية
+            else if (Math.abs(freq - END_FREQ) < 100) {
+                isReceiving = false;
+            } 
+            // فحص الحروف أثناء وضع الاستقبال
+            else if (isReceiving && freq >= BASE_FREQ - 20) {
+                let charOffset = Math.round((freq - BASE_FREQ) / STEP_FREQ);
+                let charCode = charOffset + 32;
 
-                    // كل nibbles (نصفين) يشكلان حرفاً كاملاً
-                    if (nibblesBuffer.length % 2 === 0) {
-                        let high = nibblesBuffer[nibblesBuffer.length - 2];
-                        let low = nibblesBuffer[nibblesBuffer.length - 1];
-                        let charCode = (high << 4) | low;
-                        
-                        document.getElementById('receivedText').innerText += String.fromCharCode(charCode);
+                if (charCode >= 32 && charCode <= 126) {
+                    if (charCode === lastCharCode) {
+                        charMatchCount++;
+                        // التأكد من أن التردد استقر لـ 3 إطارات متتالية على الأقل لمنع قراءة القيم الانتقالية الخاطئة
+                        if (charMatchCount === 3) {
+                            document.getElementById('receivedText').innerText += String.fromCharCode(charCode);
+                        }
+                    } else {
+                        lastCharCode = charCode;
+                        charMatchCount = 1;
                     }
                 }
             }
+        } else {
+            // صمت بين الحروف -> إعادة تعيين التردد الأخير للسماح بقراءة الحروف المكررة (مثل كلمة "hello")
+            lastCharCode = -1;
+            charMatchCount = 0;
         }
 
         requestAnimationFrame(processAudio);
