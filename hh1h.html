@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>THE UCP - Perfect Sync Protocol</title>
+    <title>THE UCP - Reliable Protocol</title>
     <style>
         :root {
             --bg: #edf2f7;
@@ -154,7 +154,7 @@
             <div class="brand-badge">UCP</div>
             <div>
                 <h1>THE UCP</h1>
-                <p>SYNC-LOCK PROTOCOL</p>
+                <p>TIME-LOCKED RELIABLE PROTOCOL</p>
             </div>
         </div>
 
@@ -184,10 +184,10 @@
     const BASE_FREQ = 15000;
     const STEP_FREQ = 30; 
     const START_FREQ = 14200; 
-    const REPEAT_TONE = 18000; // نغمة مخصصة لإخبار المستقبل بإعادة الحرف السابق
+    const REPEAT_TONE = 18000;
 
-    const TONE_DURATION = 0.20; // 200ms لكل نغمة
-    const PAUSE_DURATION = 0.08; // 80ms صمت بين كل نغمتين
+    const TONE_DURATION = 0.22; // 220ms
+    const PAUSE_DURATION = 0.08; // 80ms
 
     function showPanel(mode) {
         document.getElementById('sendPanel').classList.toggle('active', mode === 'send');
@@ -226,18 +226,16 @@
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         document.getElementById('sendBtn').disabled = true;
 
-        // إرسال نغمة بداية
-        await playTone(audioCtx, START_FREQ, 0.25);
+        await playTone(audioCtx, START_FREQ, 0.30);
 
         let lastCode = -1;
 
         for (let i = 0; i < text.length; i++) {
             let code = text.charCodeAt(i);
             if (code >= 32 && code <= 126) {
-                // إذا كان الحرف هو نفس الحرف السابق تماماً، نرسل نغمة REPEAT_TONE
                 if (code === lastCode) {
                     await playTone(audioCtx, REPEAT_TONE, TONE_DURATION);
-                    lastCode = -1; // إعادة تعيين لتمكين التكرار المتعدد مثل "lll"
+                    lastCode = -1;
                 } else {
                     let freq = BASE_FREQ + ((code - 32) * STEP_FREQ);
                     await playTone(audioCtx, freq, TONE_DURATION);
@@ -249,12 +247,12 @@
         document.getElementById('sendBtn').disabled = false;
     }
 
-    // --- المستقبل المطور بحظر التكرار ---
+    // --- المستقبل المطور بمؤقت قفل زمني ثابت ---
     let isListening = false;
     let audioContext, analyser, stream;
     let isReceiving = false;
     let lastProcessedChar = '';
-    let readyForNextChar = true;
+    let isLocked = false; // قفل ينفتح بالوقت تلقائياً
 
     async function startListening() {
         if (isListening) return;
@@ -311,18 +309,18 @@
         let nyquist = audioContext.sampleRate / 2;
         let freq = maxIndex * nyquist / bufferLength;
 
-        if (maxVal > 50) {
-            // نغمة البداية
-            if (Math.abs(freq - START_FREQ) < 80) {
+        if (maxVal > 40) {
+            // 1. التقاط نغمة البداية
+            if (Math.abs(freq - START_FREQ) < 100) {
                 isReceiving = true;
                 lastProcessedChar = '';
-                readyForNextChar = true;
+                isLocked = false;
             } 
-            else if (isReceiving && readyForNextChar) {
-                // نغمة التكرار الخاصة بحرف مكرر
-                if (Math.abs(freq - REPEAT_TONE) < 80 && lastProcessedChar !== '') {
-                    document.getElementById('receivedText').innerText += lastProcessedChar;
-                    readyForNextChar = false; // قفل استقبال أي قيمة حتى يحدث صمت بين النغمات
+            // 2. معالجة الحروف بشرط ألا يكون المستقبل مقفلاً بزمن النغمة الحالية
+            else if (isReceiving && !isLocked) {
+                // نغمة التكرار
+                if (Math.abs(freq - REPEAT_TONE) < 100 && lastProcessedChar !== '') {
+                    appendChar(lastProcessedChar);
                 } 
                 // نغمة حرف عادي
                 else if (freq >= BASE_FREQ - 20 && freq <= BASE_FREQ + (95 * STEP_FREQ) + 20) {
@@ -331,18 +329,25 @@
 
                     if (charCode >= 32 && charCode <= 126) {
                         let char = String.fromCharCode(charCode);
-                        document.getElementById('receivedText').innerText += char;
+                        appendChar(char);
                         lastProcessedChar = char;
-                        readyForNextChar = false; // قفل حتى الصمت الزمني القادم
                     }
                 }
             }
-        } else {
-            // وجود صمت بين النغمات يفتح القفل للتحضير لقراءة الحرف التالي
-            readyForNextChar = true;
         }
 
         requestAnimationFrame(processAudio);
+    }
+
+    // كتابة الحرف وقفل المستقبل فوراً لمدة زمنية تساوي زمل النغمة + الفاصل
+    function appendChar(char) {
+        document.getElementById('receivedText').innerText += char;
+        isLocked = true;
+
+        // فتح القفل تلقائياً بعد 240 ملي ثانية للاستعداد للحرف القادم
+        setTimeout(() => {
+            isLocked = false;
+        }, (TONE_DURATION + PAUSE_DURATION) * 800); 
     }
 </script>
 
