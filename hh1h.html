@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>THE UCP - 4-FSK Protocol</title>
+    <title>THE UCP - 4-FSK Protocol (Stable)</title>
     <style>
         :root {
             --bg: #edf2f7;
@@ -29,14 +29,10 @@
             padding: 24px;
         }
 
-        .app-shell {
-            width: min(100%, 760px);
-            position: relative;
-        }
+        .app-shell { width: min(100%, 760px); }
 
         .container {
             position: relative;
-            overflow: hidden;
             background: var(--panel);
             border-radius: 20px;
             padding: 30px;
@@ -59,7 +55,6 @@
             display: grid;
             place-items: center;
             font-weight: 800;
-            letter-spacing: 0.08em;
             color: #ffffff;
             background: linear-gradient(135deg, var(--accent), var(--accent-2));
             box-shadow: 0 8px 18px rgba(47, 95, 140, 0.18);
@@ -70,7 +65,6 @@
             font-size: 1.8rem;
             letter-spacing: 0.18em;
             text-transform: uppercase;
-            color: #14213d;
         }
 
         .brand p {
@@ -104,14 +98,9 @@
             background: linear-gradient(135deg, var(--accent), var(--accent-2));
             color: #ffffff;
             border-color: transparent;
-            box-shadow: 0 10px 20px rgba(47, 95, 140, 0.16);
         }
 
-        .panel {
-            display: none;
-            animation: fadeIn 0.25s ease;
-        }
-
+        .panel { display: none; }
         .panel.active { display: block; }
 
         label {
@@ -134,11 +123,6 @@
             outline: none;
         }
 
-        textarea:focus {
-            border-color: var(--accent);
-            box-shadow: 0 0 0 2px rgba(47, 95, 140, 0.12);
-        }
-
         .action-btn {
             margin-top: 14px;
             width: 100%;
@@ -150,15 +134,9 @@
             cursor: pointer;
             color: #ffffff;
             background: linear-gradient(135deg, var(--accent), var(--accent-2));
-            box-shadow: 0 10px 20px rgba(47, 95, 140, 0.16);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
-        .action-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
+        .action-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
         .status-row {
             display: flex;
@@ -182,11 +160,6 @@
             word-wrap: break-word;
             white-space: pre-wrap;
         }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(6px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
     </style>
 </head>
 <body>
@@ -197,7 +170,7 @@
             <div class="brand-badge">UCP</div>
             <div>
                 <h1>THE UCP</h1>
-                <p>ULTRASONIC COMMUNICATION PROTOCOL (4-FSK DIBIT)</p>
+                <p>ULTRASONIC COMMUNICATION PROTOCOL (STABLE)</p>
             </div>
         </div>
 
@@ -224,17 +197,17 @@
 </div>
 
 <script>
-    // خريطة الترددات لنظام 4-FSK مع مسافة واسعة جداً لمنع أي تداخل
     const FREQS = {
-        START: 17500, // نغمة بداية الحزمة (HEADER)
+        START: 17500,
         '00':  18500,
         '01':  19000,
         '10':  19500,
         '11':  20000
     };
 
-    const TONE_DURATION = 0.08; // 80ms لكل نغمة
-    const PAUSE_DURATION = 0.02; // 20ms فاصل
+    // إعدادات زمنية أبطأ وأكثر استقراراً للأجهزة
+    const TONE_DURATION = 0.20; // 200ms لتأكيد التقاط النغمة
+    const PAUSE_DURATION = 0.05; // 50ms فاصل صمت لمنع تداخل النغمات
 
     function showPanel(mode) {
         document.getElementById('sendPanel').classList.toggle('active', mode === 'send');
@@ -243,7 +216,6 @@
         document.getElementById('receiveModeBtn').classList.toggle('active', mode === 'receive');
     }
 
-    // إرسال نغمة جيبية منفردة
     function playTone(audioCtx, freq, duration) {
         return new Promise(resolve => {
             let osc = audioCtx.createOscillator();
@@ -252,10 +224,9 @@
             osc.type = 'sine';
             osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
 
-            // Smooth Envelope لمحو صوت الضغط "Clicks"
             gain.gain.setValueAtTime(0, audioCtx.currentTime);
-            gain.gain.linearRampToValueAtTime(0.5, audioCtx.currentTime + 0.01);
-            gain.gain.setValueAtTime(0.5, audioCtx.currentTime + duration - 0.01);
+            gain.gain.linearRampToValueAtTime(0.6, audioCtx.currentTime + 0.02);
+            gain.gain.setValueAtTime(0.6, audioCtx.currentTime + duration - 0.02);
             gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + duration);
 
             osc.connect(gain);
@@ -268,7 +239,6 @@
         });
     }
 
-    // تحويل النص إلى سلسلة بتات وإرسالها
     async function transmitText() {
         const text = document.getElementById('textInput').value;
         if (!text) return;
@@ -276,14 +246,13 @@
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         document.getElementById('sendBtn').disabled = true;
 
-        // إرسال نغمة البداية للتنبيه
-        await playTone(audioCtx, FREQS.START, 0.15);
+        // إرسال نغمة بداية أطول لتنبيه المستقبل (300ms)
+        await playTone(audioCtx, FREQS.START, 0.30);
 
         for (let char of text) {
             let code = char.charCodeAt(0);
-            let bin = code.toString(2).padStart(8, '0'); // تحويل إلى 8 بت
+            let bin = code.toString(2).padStart(8, '0');
 
-            // تقسيم البتات الثمانية إلى 4 أجزاء ثنائية (Dibits)
             let dibits = [
                 bin.substring(0, 2),
                 bin.substring(2, 4),
@@ -300,11 +269,11 @@
         document.getElementById('sendBtn').disabled = false;
     }
 
-    // --- قسم الاستقبال (Decoder) ---
+    // --- المستقبل ---
     let isListening = false;
     let audioContext, analyser, stream;
-    let receivedBits = [];
-    let isReceivingFrame = false;
+    let rxBuffer = [];
+    let isProcessing = false;
 
     async function startListening() {
         if (isListening) return;
@@ -321,7 +290,7 @@
 
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
             analyser = audioContext.createAnalyser();
-            analyser.fftSize = 2048; // كافي جداً لأن الفارق بين الترددات كبير (500Hz)
+            analyser.fftSize = 2048;
 
             let source = audioContext.createMediaStreamSource(stream);
             source.connect(analyser);
@@ -331,64 +300,64 @@
             document.getElementById('receivedText').innerText = "";
             document.getElementById('listenBtn').disabled = true;
 
-            processAudio();
+            listenLoop();
         } catch (err) {
             alert("Please allow microphone access.");
             console.error(err);
         }
     }
 
-    function processAudio() {
+    // التجميع عبر فترات زمنية دقيقة بدلاً من كل إطار
+    function listenLoop() {
         if (!isListening) return;
 
-        const bufferLength = analyser.frequencyBinCount;
-        const dataArray = new Uint8Array(bufferLength);
-        analyser.getByteFrequencyData(dataArray);
+        const intervalMs = (TONE_DURATION + PAUSE_DURATION) * 1000;
 
-        // البحث عن أعلى تردد مستقبَل
-        let maxVal = 0;
-        let maxFreq = 0;
+        setInterval(() => {
+            if (!isListening) return;
 
-        for (let i = 0; i < bufferLength; i++) {
-            let freq = i * (audioContext.sampleRate / 2) / bufferLength;
-            if (freq >= 17000 && freq <= 20500) {
-                if (dataArray[i] > maxVal) {
-                    maxVal = dataArray[i];
-                    maxFreq = freq;
-                }
-            }
-        }
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            analyser.getByteFrequencyData(dataArray);
 
-        // فحص ما إذا كانت هناك إشارة قوية
-        if (maxVal > 50) {
-            let detectedDibit = matchFrequency(maxFreq);
+            let maxVal = 0;
+            let maxFreq = 0;
 
-            if (detectedDibit === 'START') {
-                isReceivingFrame = true;
-                receivedBits = [];
-            } else if (isReceivingFrame && detectedDibit) {
-                // إدخال الـ Dibit إذا كان يختلف عن السابق لتجنب تكرار الإطار الواحدة
-                if (receivedBits.length === 0 || receivedBits[receivedBits.length - 1] !== detectedDibit) {
-                    receivedBits.push(detectedDibit);
-
-                    // كل 4 Dibits تشكل حرفاً كاملاً (8 bits)
-                    if (receivedBits.length % 4 === 0) {
-                        let fullBin = receivedBits.slice(-4).join('');
-                        let charCode = parseInt(fullBin, 2);
-                        let char = String.fromCharCode(charCode);
-                        
-                        document.getElementById('receivedText').innerText += char;
+            for (let i = 0; i < bufferLength; i++) {
+                let freq = i * (audioContext.sampleRate / 2) / bufferLength;
+                if (freq >= 17000 && freq <= 20500) {
+                    if (dataArray[i] > maxVal) {
+                        maxVal = dataArray[i];
+                        maxFreq = freq;
                     }
                 }
             }
-        }
 
-        requestAnimationFrame(processAudio);
+            // فحص شدة الإشارة
+            if (maxVal > 40) {
+                let detected = matchFrequency(maxFreq);
+
+                if (detected === 'START') {
+                    rxBuffer = [];
+                    isProcessing = true;
+                } else if (isProcessing && detected) {
+                    rxBuffer.push(detected);
+
+                    if (rxBuffer.length === 4) {
+                        let fullBin = rxBuffer.join('');
+                        let charCode = parseInt(fullBin, 2);
+                        let char = String.fromCharCode(charCode);
+
+                        document.getElementById('receivedText').innerText += char;
+                        rxBuffer = []; // إعادة الضبط للحرف التالي
+                    }
+                }
+            }
+        }, intervalMs / 2); // الفحص بضعف السرعة لمنع تفويت أي نغمة
     }
 
-    // مطابقة التردد المستقبَل مع أقرب Dibit
     function matchFrequency(freq) {
-        let tolerance = 150; // هامش خطأ للتردد
+        let tolerance = 200;
 
         if (Math.abs(freq - FREQS.START) < tolerance) return 'START';
         if (Math.abs(freq - FREQS['00']) < tolerance) return '00';
