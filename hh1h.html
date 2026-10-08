@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>THE UCP - Packet Validated Protocol</title>
+    <title>THE UCP - Synchronized Protocol</title>
     <style>
         :root {
             --bg: #edf2f7;
@@ -154,7 +154,7 @@
             <div class="brand-badge">UCP</div>
             <div>
                 <h1>THE UCP</h1>
-                <p>PACKET VALIDATED PROTOCOL</p>
+                <p>SYNCHRONIZED RELIABLE PROTOCOL</p>
             </div>
         </div>
 
@@ -181,14 +181,15 @@
 </div>
 
 <script>
-    const BASE_FREQ = 15000;
-    const STEP_FREQ = 35; // مسافة عريضة جداً 35Hz بين كل حرف وآخر لمنع التداخل
+    const BASE_FREQ = 14500;
+    const STEP_FREQ = 30;
 
-    const START_TONE = 14000; // نغمة بداية الباكيت
-    const END_TONE = 18500;   // نغمة نهاية الباكيت
+    const START_TONE = 13500;
+    const END_TONE = 18000;
 
-    const TONE_DURATION = 0.20; // 200ms
-    const PAUSE_DURATION = 0.08; // 80ms فاصل صمت تام لإنهاء النغمة من الهواء
+    // توقيت متزن ومجرب يتيح للميكروفون التفريق بين النغمات
+    const TONE_DURATION = 0.22;  // 220ms للنغمة
+    const PAUSE_DURATION = 0.15; // 150ms صمت تام بين كل حرف وآخر
 
     function showPanel(mode) {
         document.getElementById('sendPanel').classList.toggle('active', mode === 'send');
@@ -206,8 +207,8 @@
             osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
 
             gain.gain.setValueAtTime(0, audioCtx.currentTime);
-            gain.gain.linearRampToValueAtTime(0.7, audioCtx.currentTime + 0.015);
-            gain.gain.setValueAtTime(0.7, audioCtx.currentTime + duration - 0.015);
+            gain.gain.linearRampToValueAtTime(0.7, audioCtx.currentTime + 0.01);
+            gain.gain.setValueAtTime(0.7, audioCtx.currentTime + duration - 0.01);
             gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + duration);
 
             osc.connect(gain);
@@ -227,10 +228,10 @@
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         document.getElementById('sendBtn').disabled = true;
 
-        // 1. إرسال نغمة بداية الحزمة
-        await playTone(audioCtx, START_TONE, 0.30);
+        // إرسال نغمة البداية
+        await playTone(audioCtx, START_TONE, 0.35);
 
-        // 2. إرسال النص
+        // إرسال الحروف
         for (let i = 0; i < text.length; i++) {
             let code = text.charCodeAt(i);
             if (code >= 32 && code <= 126) {
@@ -239,13 +240,13 @@
             }
         }
 
-        // 3. إرسال نغمة نهاية الحزمة
-        await playTone(audioCtx, END_TONE, 0.30);
+        // إرسال نغمة النهاية
+        await playTone(audioCtx, END_TONE, 0.35);
 
         document.getElementById('sendBtn').disabled = false;
     }
 
-    // --- المستقبل المزود بنظام الفلترة والـ Buffer ---
+    // --- المستقبل المحدث بنظام فتح القفل بالتوقيت الزمن التلقائي ---
     let isListening = false;
     let audioContext, analyser, stream;
     
@@ -253,7 +254,7 @@
     let rawBuffer = [];
     let lastDetectedCode = -1;
     let detectCount = 0;
-    let isSilence = true;
+    let canAcceptChar = true;
 
     async function startListening() {
         if (isListening) return;
@@ -293,8 +294,8 @@
         let maxVal = 0;
         let maxIndex = -1;
 
-        let minBin = Math.floor((13500 * bufferLength) / (audioContext.sampleRate / 2));
-        let maxBin = Math.ceil((19000 * bufferLength) / (audioContext.sampleRate / 2));
+        let minBin = Math.floor((13000 * bufferLength) / (audioContext.sampleRate / 2));
+        let maxBin = Math.ceil((18500 * bufferLength) / (audioContext.sampleRate / 2));
 
         for (let i = minBin; i <= maxBin; i++) {
             if (dataArray[i] > maxVal) {
@@ -306,17 +307,18 @@
         let nyquist = audioContext.sampleRate / 2;
         let freq = maxIndex * nyquist / bufferLength;
 
-        // رفع العتبة لـ 110 لمنع التقاط النويز نهائياً!
-        if (maxVal > 110) {
-            // التقاط نغمة البداية
+        // خفض العتبة لـ 65 لتناسب أجهزة المحمول والكمبيوتر
+        if (maxVal > 65) {
+            // نغمة البداية
             if (Math.abs(freq - START_TONE) < 100) {
                 if (!isReceiving) {
                     isReceiving = true;
                     rawBuffer = [];
+                    canAcceptChar = true;
                     document.getElementById('receivedText').innerText = "Receiving packet...";
                 }
             } 
-            // التقاط نغمة النهاية
+            // نغمة النهاية
             else if (Math.abs(freq - END_TONE) < 100) {
                 if (isReceiving) {
                     isReceiving = false;
@@ -324,7 +326,7 @@
                 }
             } 
             // التقاط الحروف داخل الحزمة
-            else if (isReceiving && isSilence) {
+            else if (isReceiving && canAcceptChar) {
                 if (freq >= BASE_FREQ - 20 && freq <= BASE_FREQ + (95 * STEP_FREQ) + 20) {
                     let charOffset = Math.round((freq - BASE_FREQ) / STEP_FREQ);
                     let charCode = charOffset + 32;
@@ -332,10 +334,17 @@
                     if (charCode >= 32 && charCode <= 126) {
                         if (charCode === lastDetectedCode) {
                             detectCount++;
-                            // يجب أن يستقر التردد لمدة 4 إطارات متتالية
-                            if (detectCount === 4) {
+                            // التثبت مرتين فقط للتسريع
+                            if (detectCount === 2) {
                                 rawBuffer.push(String.fromCharCode(charCode));
-                                isSilence = false; // قفل حتى انخفاض الصوت
+                                canAcceptChar = false; // قفل الاستقبال للحرف الحالي
+
+                                // فتح القفل تلقائياً بعد انقضاء التوقيت المتوقع للنغمة
+                                setTimeout(() => {
+                                    canAcceptChar = true;
+                                    lastDetectedCode = -1;
+                                    detectCount = 0;
+                                }, (TONE_DURATION + (PAUSE_DURATION * 0.5)) * 1000);
                             }
                         } else {
                             lastDetectedCode = charCode;
@@ -344,11 +353,6 @@
                     }
                 }
             }
-        } else {
-            // انخفاض الصوت يعني وجود الفاصل الزمني بين النغمات
-            isSilence = true;
-            lastDetectedCode = -1;
-            detectCount = 0;
         }
 
         requestAnimationFrame(processAudio);
