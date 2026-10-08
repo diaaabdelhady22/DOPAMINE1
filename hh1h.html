@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>THE UCP - Interleaved Stable Protocol</title>
+    <title>THE UCP - Packet Validated Protocol</title>
     <style>
         :root {
             --bg: #edf2f7;
@@ -154,7 +154,7 @@
             <div class="brand-badge">UCP</div>
             <div>
                 <h1>THE UCP</h1>
-                <p>INTERLEAVED RELIABLE PROTOCOL</p>
+                <p>PACKET VALIDATED PROTOCOL</p>
             </div>
         </div>
 
@@ -181,14 +181,14 @@
 </div>
 
 <script>
-    // نطاق ترددات آمن جداً ومسموع لكل الميكروفونات (14.5kHz - 16.5kHz)
-    const CH_A_BASE = 14500;
-    const CH_B_BASE = 14510; // تداخل بسيط بين القناتين لمنع خروج التردد عن التغطية
-    const STEP_FREQ = 20;
+    const BASE_FREQ = 15000;
+    const STEP_FREQ = 35; // مسافة عريضة جداً 35Hz بين كل حرف وآخر لمنع التداخل
 
-    const START_FREQ = 13800; // نغمة بداية الإرسال
-    const TONE_DURATION = 0.18; // 180ms
-    const PAUSE_DURATION = 0.06; // 60ms
+    const START_TONE = 14000; // نغمة بداية الباكيت
+    const END_TONE = 18500;   // نغمة نهاية الباكيت
+
+    const TONE_DURATION = 0.20; // 200ms
+    const PAUSE_DURATION = 0.08; // 80ms فاصل صمت تام لإنهاء النغمة من الهواء
 
     function showPanel(mode) {
         document.getElementById('sendPanel').classList.toggle('active', mode === 'send');
@@ -206,8 +206,8 @@
             osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
 
             gain.gain.setValueAtTime(0, audioCtx.currentTime);
-            gain.gain.linearRampToValueAtTime(0.6, audioCtx.currentTime + 0.01);
-            gain.gain.setValueAtTime(0.6, audioCtx.currentTime + duration - 0.01);
+            gain.gain.linearRampToValueAtTime(0.7, audioCtx.currentTime + 0.015);
+            gain.gain.setValueAtTime(0.7, audioCtx.currentTime + duration - 0.015);
             gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + duration);
 
             osc.connect(gain);
@@ -227,33 +227,33 @@
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         document.getElementById('sendBtn').disabled = true;
 
-        // إرسال نغمة بداية الإرسال
-        await playTone(audioCtx, START_FREQ, 0.25);
+        // 1. إرسال نغمة بداية الحزمة
+        await playTone(audioCtx, START_TONE, 0.30);
 
-        let currentChannel = 'A';
-
+        // 2. إرسال النص
         for (let i = 0; i < text.length; i++) {
             let code = text.charCodeAt(i);
             if (code >= 32 && code <= 126) {
-                let baseFreq = (currentChannel === 'A') ? CH_A_BASE : CH_B_BASE;
-                let freq = baseFreq + ((code - 32) * STEP_FREQ);
-
+                let freq = BASE_FREQ + ((code - 32) * STEP_FREQ);
                 await playTone(audioCtx, freq, TONE_DURATION);
-                
-                // التبديل بين A و B
-                currentChannel = (currentChannel === 'A') ? 'B' : 'A';
             }
         }
+
+        // 3. إرسال نغمة نهاية الحزمة
+        await playTone(audioCtx, END_TONE, 0.30);
 
         document.getElementById('sendBtn').disabled = false;
     }
 
-    // --- المستقبل المطور المضمون ---
+    // --- المستقبل المزود بنظام الفلترة والـ Buffer ---
     let isListening = false;
     let audioContext, analyser, stream;
+    
     let isReceiving = false;
-    let expectedChannel = 'A';
-    let isLocked = false;
+    let rawBuffer = [];
+    let lastDetectedCode = -1;
+    let detectCount = 0;
+    let isSilence = true;
 
     async function startListening() {
         if (isListening) return;
@@ -293,8 +293,8 @@
         let maxVal = 0;
         let maxIndex = -1;
 
-        let minBin = Math.floor((13000 * bufferLength) / (audioContext.sampleRate / 2));
-        let maxBin = Math.ceil((17000 * bufferLength) / (audioContext.sampleRate / 2));
+        let minBin = Math.floor((13500 * bufferLength) / (audioContext.sampleRate / 2));
+        let maxBin = Math.ceil((19000 * bufferLength) / (audioContext.sampleRate / 2));
 
         for (let i = minBin; i <= maxBin; i++) {
             if (dataArray[i] > maxVal) {
@@ -306,36 +306,60 @@
         let nyquist = audioContext.sampleRate / 2;
         let freq = maxIndex * nyquist / bufferLength;
 
-        if (maxVal > 40) {
+        // رفع العتبة لـ 110 لمنع التقاط النويز نهائياً!
+        if (maxVal > 110) {
             // التقاط نغمة البداية
-            if (Math.abs(freq - START_FREQ) < 100) {
-                isReceiving = true;
-                expectedChannel = 'A';
-                isLocked = false;
+            if (Math.abs(freq - START_TONE) < 100) {
+                if (!isReceiving) {
+                    isReceiving = true;
+                    rawBuffer = [];
+                    document.getElementById('receivedText').innerText = "Receiving packet...";
+                }
             } 
-            else if (isReceiving && !isLocked) {
-                let baseFreq = (expectedChannel === 'A') ? CH_A_BASE : CH_B_BASE;
-
-                if (freq >= baseFreq - 15 && freq <= baseFreq + (95 * STEP_FREQ) + 15) {
-                    let charOffset = Math.round((freq - baseFreq) / STEP_FREQ);
+            // التقاط نغمة النهاية
+            else if (Math.abs(freq - END_TONE) < 100) {
+                if (isReceiving) {
+                    isReceiving = false;
+                    renderPacket();
+                }
+            } 
+            // التقاط الحروف داخل الحزمة
+            else if (isReceiving && isSilence) {
+                if (freq >= BASE_FREQ - 20 && freq <= BASE_FREQ + (95 * STEP_FREQ) + 20) {
+                    let charOffset = Math.round((freq - BASE_FREQ) / STEP_FREQ);
                     let charCode = charOffset + 32;
 
                     if (charCode >= 32 && charCode <= 126) {
-                        document.getElementById('receivedText').innerText += String.fromCharCode(charCode);
-                        
-                        // قفل الاستقبال مؤقتاً والتبديل للقناة الموالية
-                        isLocked = true;
-                        expectedChannel = (expectedChannel === 'A') ? 'B' : 'A';
-
-                        setTimeout(() => {
-                            isLocked = false;
-                        }, (TONE_DURATION) * 1000);
+                        if (charCode === lastDetectedCode) {
+                            detectCount++;
+                            // يجب أن يستقر التردد لمدة 4 إطارات متتالية
+                            if (detectCount === 4) {
+                                rawBuffer.push(String.fromCharCode(charCode));
+                                isSilence = false; // قفل حتى انخفاض الصوت
+                            }
+                        } else {
+                            lastDetectedCode = charCode;
+                            detectCount = 1;
+                        }
                     }
                 }
             }
+        } else {
+            // انخفاض الصوت يعني وجود الفاصل الزمني بين النغمات
+            isSilence = true;
+            lastDetectedCode = -1;
+            detectCount = 0;
         }
 
         requestAnimationFrame(processAudio);
+    }
+
+    function renderPacket() {
+        if (rawBuffer.length > 0) {
+            document.getElementById('receivedText').innerText = rawBuffer.join('');
+        } else {
+            document.getElementById('receivedText').innerText = "";
+        }
     }
 </script>
 
