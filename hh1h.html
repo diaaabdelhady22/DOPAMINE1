@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>THE UCP - Dual-Tone Morse Protocol</title>
+    <title>THE UCP - Interleaved Stable Protocol</title>
     <style>
         :root {
             --bg: #edf2f7;
@@ -154,7 +154,7 @@
             <div class="brand-badge">UCP</div>
             <div>
                 <h1>THE UCP</h1>
-                <p>DUAL-TONE MORSE PROTOCOL</p>
+                <p>INTERLEAVED RELIABLE PROTOCOL</p>
             </div>
         </div>
 
@@ -181,27 +181,14 @@
 </div>
 
 <script>
-    // جدول مورس الحصري للرموز
-    const MORSE_MAP = {
-        'A': '.-',    'B': '-...',  'C': '-.-.',  'D': '-..',   'E': '.',
-        'F': '..-.',  'G': '--.',   'H': '....',  'I': '..',    'J': '.---',
-        'K': '-.-',   'L': '.-..',  'M': '--',    'N': '-.',    'O': '---',
-        'P': '.--.',  'Q': '--.-',  'R': '.-.',   'S': '...',   'T': '-',
-        'U': '..-',   'V': '...-',  'W': '.--',   'X': '-..-',  'Y': '-.--',
-        'Z': '--..',  '1': '.----', '2': '..---', '3': '...--', '4': '....-',
-        '5': '.....', '6': '-....', '7': '--...', '8': '---..', '9': '----.',
-        '0': '-----', ' ': '/'
-    };
+    // نطاق ترددات آمن جداً ومسموع لكل الميكروفونات (14.5kHz - 16.5kHz)
+    const CH_A_BASE = 14500;
+    const CH_B_BASE = 14510; // تداخل بسيط بين القناتين لمنع خروج التردد عن التغطية
+    const STEP_FREQ = 20;
 
-    const REVERSE_MORSE = Object.fromEntries(Object.entries(MORSE_MAP).map(([k, v]) => [v, k]));
-
-    // الترددات الأساسية المستقرة (فرق شاسع بين الترددات لمنع أي التباس)
-    const DOT_FREQ = 15000;    // تردد النقطة .
-    const DASH_FREQ = 17500;   // تردد الشرطة -
-    const START_FREQ = 13500;  // نغمة التنبيه للبداية
-
-    const SYMBOL_DURATION = 0.12; // 120ms لكل رمز
-    const PAUSE_DURATION = 0.05;  // 50ms صمت بين الرموز
+    const START_FREQ = 13800; // نغمة بداية الإرسال
+    const TONE_DURATION = 0.18; // 180ms
+    const PAUSE_DURATION = 0.06; // 60ms
 
     function showPanel(mode) {
         document.getElementById('sendPanel').classList.toggle('active', mode === 'send');
@@ -234,7 +221,7 @@
     }
 
     async function transmitText() {
-        const text = document.getElementById('textInput').value.toUpperCase();
+        const text = document.getElementById('textInput').value;
         if (!text) return;
 
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -243,36 +230,30 @@
         // إرسال نغمة بداية الإرسال
         await playTone(audioCtx, START_FREQ, 0.25);
 
-        for (let i = 0; i < text.length; i++) {
-            let char = text[i];
-            let code = MORSE_MAP[char];
+        let currentChannel = 'A';
 
-            if (code) {
-                for (let symbol of code) {
-                    if (symbol === '.') {
-                        await playTone(audioCtx, DOT_FREQ, SYMBOL_DURATION);
-                    } else if (symbol === '-') {
-                        await playTone(audioCtx, DASH_FREQ, SYMBOL_DURATION);
-                    } else if (symbol === '/') {
-                        // مسافة بين الكلمات (صمت زمني)
-                        await new Promise(r => setTimeout(r, 300));
-                    }
-                }
-                // فاصل زمني بين كل حرف والآخر مع إرسال تردد نبض خفيف أو انتظار صمت
-                await new Promise(r => setTimeout(r, 200));
+        for (let i = 0; i < text.length; i++) {
+            let code = text.charCodeAt(i);
+            if (code >= 32 && code <= 126) {
+                let baseFreq = (currentChannel === 'A') ? CH_A_BASE : CH_B_BASE;
+                let freq = baseFreq + ((code - 32) * STEP_FREQ);
+
+                await playTone(audioCtx, freq, TONE_DURATION);
+                
+                // التبديل بين A و B
+                currentChannel = (currentChannel === 'A') ? 'B' : 'A';
             }
         }
 
         document.getElementById('sendBtn').disabled = false;
     }
 
-    // --- المستقبل المطور بنظام Morse Decoders ---
+    // --- المستقبل المطور المضمون ---
     let isListening = false;
     let audioContext, analyser, stream;
     let isReceiving = false;
-    let currentMorseBuffer = "";
+    let expectedChannel = 'A';
     let isLocked = false;
-    let silenceTimer = null;
 
     async function startListening() {
         if (isListening) return;
@@ -285,7 +266,7 @@
 
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
             analyser = audioContext.createAnalyser();
-            analyser.fftSize = 2048;
+            analyser.fftSize = 4096;
 
             let source = audioContext.createMediaStreamSource(stream);
             source.connect(analyser);
@@ -313,7 +294,7 @@
         let maxIndex = -1;
 
         let minBin = Math.floor((13000 * bufferLength) / (audioContext.sampleRate / 2));
-        let maxBin = Math.ceil((18500 * bufferLength) / (audioContext.sampleRate / 2));
+        let maxBin = Math.ceil((17000 * bufferLength) / (audioContext.sampleRate / 2));
 
         for (let i = minBin; i <= maxBin; i++) {
             if (dataArray[i] > maxVal) {
@@ -325,46 +306,36 @@
         let nyquist = audioContext.sampleRate / 2;
         let freq = maxIndex * nyquist / bufferLength;
 
-        if (maxVal > 45) {
-            // نغمة البداية
-            if (Math.abs(freq - START_FREQ) < 150) {
+        if (maxVal > 40) {
+            // التقاط نغمة البداية
+            if (Math.abs(freq - START_FREQ) < 100) {
                 isReceiving = true;
-                currentMorseBuffer = "";
-                document.getElementById('receivedText').innerText = "";
+                expectedChannel = 'A';
+                isLocked = false;
             } 
             else if (isReceiving && !isLocked) {
-                // التقاط النقطة (.)
-                if (Math.abs(freq - DOT_FREQ) < 250) {
-                    addSymbol('.');
-                } 
-                // التقاط الشرطة (-)
-                else if (Math.abs(freq - DASH_FREQ) < 250) {
-                    addSymbol('-');
+                let baseFreq = (expectedChannel === 'A') ? CH_A_BASE : CH_B_BASE;
+
+                if (freq >= baseFreq - 15 && freq <= baseFreq + (95 * STEP_FREQ) + 15) {
+                    let charOffset = Math.round((freq - baseFreq) / STEP_FREQ);
+                    let charCode = charOffset + 32;
+
+                    if (charCode >= 32 && charCode <= 126) {
+                        document.getElementById('receivedText').innerText += String.fromCharCode(charCode);
+                        
+                        // قفل الاستقبال مؤقتاً والتبديل للقناة الموالية
+                        isLocked = true;
+                        expectedChannel = (expectedChannel === 'A') ? 'B' : 'A';
+
+                        setTimeout(() => {
+                            isLocked = false;
+                        }, (TONE_DURATION) * 1000);
+                    }
                 }
             }
         }
 
         requestAnimationFrame(processAudio);
-    }
-
-    function addSymbol(sym) {
-        currentMorseBuffer += sym;
-        isLocked = true;
-
-        // إعادة تفعيل المؤقت لحساب نهاية الحرف وإعادة ترجمته
-        clearTimeout(silenceTimer);
-        
-        // فتح الاستقبال للرمز القادم
-        setTimeout(() => { isLocked = false; }, (SYMBOL_DURATION + PAUSE_DURATION) * 800);
-
-        // إذا مر 350ms بدون استقبال رموز جديدة، نترجم المخزن إلى حرف حقيقي
-        silenceTimer = setTimeout(() => {
-            if (currentMorseBuffer.length > 0) {
-                let char = REVERSE_MORSE[currentMorseBuffer] || '?';
-                document.getElementById('receivedText').innerText += char;
-                currentMorseBuffer = "";
-            }
-        }, 380);
     }
 </script>
 
