@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>THE UCP - 4-FSK Protocol (Stable)</title>
+    <title>THE UCP - Chirp Protocol</title>
     <style>
         :root {
             --bg: #edf2f7;
@@ -60,19 +60,8 @@
             box-shadow: 0 8px 18px rgba(47, 95, 140, 0.18);
         }
 
-        .brand h1 {
-            margin: 0;
-            font-size: 1.8rem;
-            letter-spacing: 0.18em;
-            text-transform: uppercase;
-        }
-
-        .brand p {
-            margin: 4px 0 0;
-            color: var(--muted);
-            font-size: 0.85rem;
-            text-align: center;
-        }
+        .brand h1 { margin: 0; font-size: 1.8rem; letter-spacing: 0.18em; }
+        .brand p { margin: 4px 0 0; color: var(--muted); font-size: 0.85rem; text-align: center; }
 
         .mode-switch {
             display: flex;
@@ -103,12 +92,7 @@
         .panel { display: none; }
         .panel.active { display: block; }
 
-        label {
-            display: block;
-            margin-bottom: 8px;
-            color: var(--muted);
-            font-weight: 700;
-        }
+        label { display: block; margin-bottom: 8px; color: var(--muted); font-weight: 700; }
 
         textarea {
             width: 100%;
@@ -170,7 +154,7 @@
             <div class="brand-badge">UCP</div>
             <div>
                 <h1>THE UCP</h1>
-                <p>ULTRASONIC COMMUNICATION PROTOCOL (STABLE)</p>
+                <p>CHIRP / ACOUSTIC PACKET PROTOCOL</p>
             </div>
         </div>
 
@@ -197,17 +181,11 @@
 </div>
 
 <script>
-    const FREQS = {
-        START: 17500,
-        '00':  18500,
-        '01':  19000,
-        '10':  19500,
-        '11':  20000
-    };
-
-    // إعدادات زمنية أبطأ وأكثر استقراراً للأجهزة
-    const TONE_DURATION = 0.20; // 200ms لتأكيد التقاط النغمة
-    const PAUSE_DURATION = 0.05; // 50ms فاصل صمت لمنع تداخل النغمات
+    // استخدام نطاق ترددات أعمق قليلاً لاستقبال متكافئ عبر كل الهواتف والميكروفونات
+    const F_LOW = 15000;  // التردد الأدنى
+    const F_HIGH = 18000; // التردد الأعلى
+    const CHIRP_DURATION = 0.15; // 150ms لكل نزلاق تردد
+    const PAUSE = 0.05; // 50ms صمت بين الحروف لمنع تداخل الصدى
 
     function showPanel(mode) {
         document.getElementById('sendPanel').classList.toggle('active', mode === 'send');
@@ -216,17 +194,19 @@
         document.getElementById('receiveModeBtn').classList.toggle('active', mode === 'receive');
     }
 
-    function playTone(audioCtx, freq, duration) {
+    // إنشاء صوت Chirp (انزلاق تردد) يمثل القيمة
+    function playChirp(audioCtx, startFreq, endFreq, duration) {
         return new Promise(resolve => {
             let osc = audioCtx.createOscillator();
             let gain = audioCtx.createGain();
 
             osc.type = 'sine';
-            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            osc.frequency.setValueAtTime(startFreq, audioCtx.currentTime);
+            osc.frequency.linearRampToValueAtTime(endFreq, audioCtx.currentTime + duration);
 
             gain.gain.setValueAtTime(0, audioCtx.currentTime);
-            gain.gain.linearRampToValueAtTime(0.6, audioCtx.currentTime + 0.02);
-            gain.gain.setValueAtTime(0.6, audioCtx.currentTime + duration - 0.02);
+            gain.gain.linearRampToValueAtTime(0.7, audioCtx.currentTime + 0.01);
+            gain.gain.setValueAtTime(0.7, audioCtx.currentTime + duration - 0.01);
             gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + duration);
 
             osc.connect(gain);
@@ -235,7 +215,7 @@
             osc.start();
             osc.stop(audioCtx.currentTime + duration);
 
-            setTimeout(resolve, (duration + PAUSE_DURATION) * 1000);
+            setTimeout(resolve, (duration + PAUSE) * 1000);
         });
     }
 
@@ -246,24 +226,21 @@
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         document.getElementById('sendBtn').disabled = true;
 
-        // إرسال نغمة بداية أطول لتنبيه المستقبل (300ms)
-        await playTone(audioCtx, FREQS.START, 0.30);
+        // 1. إرسال Header Chirp (انزلاق كامل من 14kHz لـ 19kHz)
+        await playChirp(audioCtx, 14000, 19000, 0.3);
 
+        // 2. إرسال كل حرف كنغمتين انزلاقيتين (Base-16 Chirps)
         for (let char of text) {
             let code = char.charCodeAt(0);
-            let bin = code.toString(2).padStart(8, '0');
+            let highNibble = (code >> 4) & 0x0F; // النصف الأول من البايت
+            let lowNibble = code & 0x0F;        // النصف الثاني من البايت
 
-            let dibits = [
-                bin.substring(0, 2),
-                bin.substring(2, 4),
-                bin.substring(4, 6),
-                bin.substring(6, 8)
-            ];
+            // تحويل النصفين لترددات انزلاقية محددة
+            let f1 = F_LOW + (highNibble * 180);
+            let f2 = F_LOW + (lowNibble * 180);
 
-            for (let dibit of dibits) {
-                let freq = FREQS[dibit];
-                await playTone(audioCtx, freq, TONE_DURATION);
-            }
+            await playChirp(audioCtx, f1, f1 + 250, CHIRP_DURATION);
+            await playChirp(audioCtx, f2, f2 + 250, CHIRP_DURATION);
         }
 
         document.getElementById('sendBtn').disabled = false;
@@ -272,8 +249,7 @@
     // --- المستقبل ---
     let isListening = false;
     let audioContext, analyser, stream;
-    let rxBuffer = [];
-    let isProcessing = false;
+    let nibblesBuffer = [];
 
     async function startListening() {
         if (isListening) return;
@@ -300,72 +276,57 @@
             document.getElementById('receivedText').innerText = "";
             document.getElementById('listenBtn').disabled = true;
 
-            listenLoop();
+            processAudio();
         } catch (err) {
             alert("Please allow microphone access.");
             console.error(err);
         }
     }
 
-    // التجميع عبر فترات زمنية دقيقة بدلاً من كل إطار
-    function listenLoop() {
+    let lastDetectedTime = 0;
+
+    function processAudio() {
         if (!isListening) return;
 
-        const intervalMs = (TONE_DURATION + PAUSE_DURATION) * 1000;
+        const bufferLength = analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+        analyser.getByteFrequencyData(dataArray);
 
-        setInterval(() => {
-            if (!isListening) return;
+        let maxVal = 0;
+        let maxIndex = -1;
 
-            const bufferLength = analyser.frequencyBinCount;
-            const dataArray = new Uint8Array(bufferLength);
-            analyser.getByteFrequencyData(dataArray);
+        for (let i = 0; i < bufferLength; i++) {
+            if (dataArray[i] > maxVal) {
+                maxVal = dataArray[i];
+                maxIndex = i;
+            }
+        }
 
-            let maxVal = 0;
-            let maxFreq = 0;
+        let nyquist = audioContext.sampleRate / 2;
+        let freq = maxIndex * nyquist / bufferLength;
+        const now = performance.now();
 
-            for (let i = 0; i < bufferLength; i++) {
-                let freq = i * (audioContext.sampleRate / 2) / bufferLength;
-                if (freq >= 17000 && freq <= 20500) {
-                    if (dataArray[i] > maxVal) {
-                        maxVal = dataArray[i];
-                        maxFreq = freq;
+        // التقاط الترددات بفاصل زمني يمنع التكرار (Debounce)
+        if (maxVal > 45 && freq >= F_LOW && freq <= F_HIGH + 500) {
+            if (now - lastDetectedTime > (CHIRP_DURATION * 1000 * 0.7)) {
+                let nibble = Math.round((freq - F_LOW) / 180);
+                if (nibble >= 0 && nibble <= 15) {
+                    nibblesBuffer.push(nibble);
+                    lastDetectedTime = now;
+
+                    // كل nibbles (نصفين) يشكلان حرفاً كاملاً
+                    if (nibblesBuffer.length % 2 === 0) {
+                        let high = nibblesBuffer[nibblesBuffer.length - 2];
+                        let low = nibblesBuffer[nibblesBuffer.length - 1];
+                        let charCode = (high << 4) | low;
+                        
+                        document.getElementById('receivedText').innerText += String.fromCharCode(charCode);
                     }
                 }
             }
+        }
 
-            // فحص شدة الإشارة
-            if (maxVal > 40) {
-                let detected = matchFrequency(maxFreq);
-
-                if (detected === 'START') {
-                    rxBuffer = [];
-                    isProcessing = true;
-                } else if (isProcessing && detected) {
-                    rxBuffer.push(detected);
-
-                    if (rxBuffer.length === 4) {
-                        let fullBin = rxBuffer.join('');
-                        let charCode = parseInt(fullBin, 2);
-                        let char = String.fromCharCode(charCode);
-
-                        document.getElementById('receivedText').innerText += char;
-                        rxBuffer = []; // إعادة الضبط للحرف التالي
-                    }
-                }
-            }
-        }, intervalMs / 2); // الفحص بضعف السرعة لمنع تفويت أي نغمة
-    }
-
-    function matchFrequency(freq) {
-        let tolerance = 200;
-
-        if (Math.abs(freq - FREQS.START) < tolerance) return 'START';
-        if (Math.abs(freq - FREQS['00']) < tolerance) return '00';
-        if (Math.abs(freq - FREQS['01']) < tolerance) return '01';
-        if (Math.abs(freq - FREQS['10']) < tolerance) return '10';
-        if (Math.abs(freq - FREQS['11']) < tolerance) return '11';
-
-        return null;
+        requestAnimationFrame(processAudio);
     }
 </script>
 
