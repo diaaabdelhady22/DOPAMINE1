@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>THE UCP - Stable ASCII Protocol</title>
+    <title>THE UCP - Perfect Sync Protocol</title>
     <style>
         :root {
             --bg: #edf2f7;
@@ -154,7 +154,7 @@
             <div class="brand-badge">UCP</div>
             <div>
                 <h1>THE UCP</h1>
-                <p>STABLE ACOUSTIC PROTOCOL</p>
+                <p>SYNC-LOCK PROTOCOL</p>
             </div>
         </div>
 
@@ -181,14 +181,13 @@
 </div>
 
 <script>
-    // إعدادات الترددات (نطاق بين 15kHz و 18kHz يسهل لجميع الميكروفونات التقاطه)
     const BASE_FREQ = 15000;
-    const STEP_FREQ = 25; // 25Hz بين كل حرف وآخر
-    const START_FREQ = 14500; // نغمة بداية
-    const END_FREQ = 18200;   // نغمة نهاية
+    const STEP_FREQ = 30; 
+    const START_FREQ = 14200; 
+    const REPEAT_TONE = 18000; // نغمة مخصصة لإخبار المستقبل بإعادة الحرف السابق
 
-    const TONE_DURATION = 0.18; // 180ms زمن النغمة
-    const PAUSE_DURATION = 0.08; // 80ms فاصل صمت لمنع الصدى
+    const TONE_DURATION = 0.20; // 200ms لكل نغمة
+    const PAUSE_DURATION = 0.08; // 80ms صمت بين كل نغمتين
 
     function showPanel(mode) {
         document.getElementById('sendPanel').classList.toggle('active', mode === 'send');
@@ -206,8 +205,8 @@
             osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
 
             gain.gain.setValueAtTime(0, audioCtx.currentTime);
-            gain.gain.linearRampToValueAtTime(0.6, audioCtx.currentTime + 0.015);
-            gain.gain.setValueAtTime(0.6, audioCtx.currentTime + duration - 0.015);
+            gain.gain.linearRampToValueAtTime(0.6, audioCtx.currentTime + 0.02);
+            gain.gain.setValueAtTime(0.6, audioCtx.currentTime + duration - 0.02);
             gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + duration);
 
             osc.connect(gain);
@@ -227,31 +226,35 @@
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         document.getElementById('sendBtn').disabled = true;
 
-        // 1. إرسال نغمة البداية
+        // إرسال نغمة بداية
         await playTone(audioCtx, START_FREQ, 0.25);
 
-        // 2. إرسال كل حرف بتردد مستقل مباشر
+        let lastCode = -1;
+
         for (let i = 0; i < text.length; i++) {
             let code = text.charCodeAt(i);
-            // حصر نطاق ASCII للتأكد من الصحة
             if (code >= 32 && code <= 126) {
-                let freq = BASE_FREQ + ((code - 32) * STEP_FREQ);
-                await playTone(audioCtx, freq, TONE_DURATION);
+                // إذا كان الحرف هو نفس الحرف السابق تماماً، نرسل نغمة REPEAT_TONE
+                if (code === lastCode) {
+                    await playTone(audioCtx, REPEAT_TONE, TONE_DURATION);
+                    lastCode = -1; // إعادة تعيين لتمكين التكرار المتعدد مثل "lll"
+                } else {
+                    let freq = BASE_FREQ + ((code - 32) * STEP_FREQ);
+                    await playTone(audioCtx, freq, TONE_DURATION);
+                    lastCode = code;
+                }
             }
         }
-
-        // 3. إرسال نغمة النهاية
-        await playTone(audioCtx, END_FREQ, 0.20);
 
         document.getElementById('sendBtn').disabled = false;
     }
 
-    // --- المستقبل المطور ---
+    // --- المستقبل المطور بحظر التكرار ---
     let isListening = false;
     let audioContext, analyser, stream;
-    let lastCharCode = -1;
-    let charMatchCount = 0;
     let isReceiving = false;
+    let lastProcessedChar = '';
+    let readyForNextChar = true;
 
     async function startListening() {
         if (isListening) return;
@@ -268,7 +271,7 @@
 
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
             analyser = audioContext.createAnalyser();
-            analyser.fftSize = 4096; // رفع الدقة لتحديد التردد بدقة 10Hz
+            analyser.fftSize = 4096;
 
             let source = audioContext.createMediaStreamSource(stream);
             source.connect(analyser);
@@ -295,7 +298,6 @@
         let maxVal = 0;
         let maxIndex = -1;
 
-        // البحث في نطاق التردد الخاص بنا فقط
         let minBin = Math.floor((14000 * bufferLength) / (audioContext.sampleRate / 2));
         let maxBin = Math.ceil((18500 * bufferLength) / (audioContext.sampleRate / 2));
 
@@ -309,40 +311,35 @@
         let nyquist = audioContext.sampleRate / 2;
         let freq = maxIndex * nyquist / bufferLength;
 
-        // عتبة قوة الصوت (Threshold) لتجاهل الضوضاء
-        if (maxVal > 45) {
-            // فحص نغمة البداية
-            if (Math.abs(freq - START_FREQ) < 100) {
+        if (maxVal > 50) {
+            // نغمة البداية
+            if (Math.abs(freq - START_FREQ) < 80) {
                 isReceiving = true;
-                lastCharCode = -1;
-                charMatchCount = 0;
+                lastProcessedChar = '';
+                readyForNextChar = true;
             } 
-            // فحص نغمة النهاية
-            else if (Math.abs(freq - END_FREQ) < 100) {
-                isReceiving = false;
-            } 
-            // فحص الحروف أثناء وضع الاستقبال
-            else if (isReceiving && freq >= BASE_FREQ - 20) {
-                let charOffset = Math.round((freq - BASE_FREQ) / STEP_FREQ);
-                let charCode = charOffset + 32;
+            else if (isReceiving && readyForNextChar) {
+                // نغمة التكرار الخاصة بحرف مكرر
+                if (Math.abs(freq - REPEAT_TONE) < 80 && lastProcessedChar !== '') {
+                    document.getElementById('receivedText').innerText += lastProcessedChar;
+                    readyForNextChar = false; // قفل استقبال أي قيمة حتى يحدث صمت بين النغمات
+                } 
+                // نغمة حرف عادي
+                else if (freq >= BASE_FREQ - 20 && freq <= BASE_FREQ + (95 * STEP_FREQ) + 20) {
+                    let charOffset = Math.round((freq - BASE_FREQ) / STEP_FREQ);
+                    let charCode = charOffset + 32;
 
-                if (charCode >= 32 && charCode <= 126) {
-                    if (charCode === lastCharCode) {
-                        charMatchCount++;
-                        // التأكد من أن التردد استقر لـ 3 إطارات متتالية على الأقل لمنع قراءة القيم الانتقالية الخاطئة
-                        if (charMatchCount === 3) {
-                            document.getElementById('receivedText').innerText += String.fromCharCode(charCode);
-                        }
-                    } else {
-                        lastCharCode = charCode;
-                        charMatchCount = 1;
+                    if (charCode >= 32 && charCode <= 126) {
+                        let char = String.fromCharCode(charCode);
+                        document.getElementById('receivedText').innerText += char;
+                        lastProcessedChar = char;
+                        readyForNextChar = false; // قفل حتى الصمت الزمني القادم
                     }
                 }
             }
         } else {
-            // صمت بين الحروف -> إعادة تعيين التردد الأخير للسماح بقراءة الحروف المكررة (مثل كلمة "hello")
-            lastCharCode = -1;
-            charMatchCount = 0;
+            // وجود صمت بين النغمات يفتح القفل للتحضير لقراءة الحرف التالي
+            readyForNextChar = true;
         }
 
         requestAnimationFrame(processAudio);
