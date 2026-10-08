@@ -1,2138 +1,403 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THE UCP - 4-FSK Protocol</title>
+    <style>
+        :root {
+            --bg: #edf2f7;
+            --panel: #f8fafc;
+            --text: #14213d;
+            --muted: #5b6b7f;
+            --accent: #2f5f8c;
+            --accent-2: #4d7aa7;
+            --border: rgba(20, 33, 61, 0.16);
+            --shadow: 0 16px 40px rgba(15, 23, 34, 0.12);
+        }
 
-<title>UCP F1 / F2 Communication Test</title>
+        * { box-sizing: border-box; }
 
-<style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f7f9fc 0%, #e9eef4 100%);
+            color: var(--text);
+            display: grid;
+            place-items: center;
+            padding: 24px;
+        }
 
-*{
-    box-sizing:border-box;
-}
+        .app-shell {
+            width: min(100%, 760px);
+            position: relative;
+        }
 
-body{
-    margin:0;
-    background:#0d1117;
-    color:#f2f4f7;
-    font-family:Arial,sans-serif;
-}
+        .container {
+            position: relative;
+            overflow: hidden;
+            background: var(--panel);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+        }
 
-.container{
-    width:min(1100px,94%);
-    margin:25px auto;
-}
+        .brand {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 18px;
+        }
 
-h1{
-    margin:0 0 8px;
-}
+        .brand-badge {
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
+            display: grid;
+            place-items: center;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            color: #ffffff;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            box-shadow: 0 8px 18px rgba(47, 95, 140, 0.18);
+        }
 
-.subtitle{
-    color:#9da7b2;
-    margin-bottom:25px;
-}
+        .brand h1 {
+            margin: 0;
+            font-size: 1.8rem;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: #14213d;
+        }
 
-.grid{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:18px;
-}
+        .brand p {
+            margin: 4px 0 0;
+            color: var(--muted);
+            font-size: 0.85rem;
+            text-align: center;
+        }
 
-.card{
-    background:#151b22;
-    border:1px solid #29323c;
-    border-radius:12px;
-    padding:20px;
-}
+        .mode-switch {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin: 18px 0 16px;
+        }
 
-.card h2{
-    margin-top:0;
-}
+        .mode-btn {
+            flex: 1;
+            border: 1px solid var(--border);
+            padding: 12px 16px;
+            border-radius: 999px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            color: var(--text);
+            background: #eef3f8;
+            transition: all 0.2s ease;
+        }
 
-label{
-    display:block;
-    color:#9da7b2;
-    font-size:14px;
-    margin:12px 0 6px;
-}
+        .mode-btn.active {
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            color: #ffffff;
+            border-color: transparent;
+            box-shadow: 0 10px 20px rgba(47, 95, 140, 0.16);
+        }
 
-input,
-textarea{
-    width:100%;
-    background:#090d12;
-    color:#fff;
-    border:1px solid #35404c;
-    border-radius:8px;
-    padding:12px;
-    font-size:16px;
-    outline:none;
-}
+        .panel {
+            display: none;
+            animation: fadeIn 0.25s ease;
+        }
 
-textarea{
-    min-height:110px;
-    resize:vertical;
-}
+        .panel.active { display: block; }
 
-button{
-    border:0;
-    border-radius:8px;
-    padding:12px 16px;
-    margin:8px 4px 0 0;
-    cursor:pointer;
-    font-weight:bold;
-}
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--muted);
+            font-weight: 700;
+        }
 
-.primary{
-    background:#fff;
-    color:#111;
-}
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 14px;
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            background: #ffffff;
+            color: var(--text);
+            font-size: 1rem;
+            resize: vertical;
+            outline: none;
+        }
 
-.secondary{
-    background:#303a46;
-    color:#fff;
-}
+        textarea:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(47, 95, 140, 0.12);
+        }
 
-.stop{
-    background:#7d3030;
-    color:#fff;
-}
+        .action-btn {
+            margin-top: 14px;
+            width: 100%;
+            border: none;
+            padding: 13px 16px;
+            border-radius: 999px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            color: #ffffff;
+            background: linear-gradient(135deg, var(--accent), var(--accent-2));
+            box-shadow: 0 10px 20px rgba(47, 95, 140, 0.16);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
 
-.status{
-    margin-top:14px;
-    background:#080b0f;
-    border:1px solid #29323c;
-    border-radius:8px;
-    padding:12px;
-    font-family:monospace;
-    white-space:pre-wrap;
-    min-height:48px;
-}
+        .action-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
 
-.frequency{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:10px;
-}
+        .status-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
 
-.freqBox{
-    background:#090d12;
-    border:1px solid #29323c;
-    border-radius:8px;
-    padding:14px;
-}
+        .status { color: #325d85; font-weight: 700; }
 
-.freqBox strong{
-    display:block;
-    font-size:24px;
-    margin-top:5px;
-}
+        .result-box {
+            margin-top: 14px;
+            min-height: 92px;
+            padding: 14px;
+            border-radius: 14px;
+            background: #f3f6fa;
+            border: 1px solid var(--border);
+            color: #23415f;
+            font-size: 1.05rem;
+            font-weight: 700;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
 
-.live{
-    background:#050805;
-    border:1px solid #293c29;
-    border-radius:8px;
-    padding:18px;
-    min-height:130px;
-    font-family:monospace;
-}
-
-.liveFrequency{
-    font-size:28px;
-}
-
-.symbols{
-    margin-top:12px;
-    font-size:25px;
-    letter-spacing:5px;
-    word-break:break-all;
-}
-
-.message{
-    margin-top:15px;
-    padding:15px;
-    background:#090d12;
-    border-radius:8px;
-    font-size:24px;
-    min-height:65px;
-    word-break:break-word;
-}
-
-.tableWrap{
-    overflow:auto;
-}
-
-table{
-    width:100%;
-    border-collapse:collapse;
-    margin-top:10px;
-}
-
-th,
-td{
-    border-bottom:1px solid #29323c;
-    padding:9px;
-    text-align:center;
-}
-
-th{
-    color:#aab4bf;
-}
-
-td code{
-    color:#fff;
-}
-
-.small{
-    color:#8e99a5;
-    font-size:13px;
-    line-height:1.6;
-}
-
-.meter{
-    width:100%;
-    height:12px;
-    background:#080b0f;
-    border-radius:20px;
-    overflow:hidden;
-    margin-top:12px;
-}
-
-.meterFill{
-    height:100%;
-    width:0%;
-    background:#fff;
-    transition:width .05s;
-}
-
-.debug{
-    max-height:240px;
-    overflow:auto;
-    background:#080b0f;
-    border:1px solid #29323c;
-    border-radius:8px;
-    padding:12px;
-    font:13px monospace;
-    line-height:1.7;
-    direction:ltr;
-    text-align:left;
-}
-
-@media(max-width:800px){
-
-    .grid{
-        grid-template-columns:1fr;
-    }
-
-}
-
-</style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
 </head>
-
 <body>
 
-<div class="container">
+<div class="app-shell">
+    <div class="container">
+        <div class="brand">
+            <div class="brand-badge">UCP</div>
+            <div>
+                <h1>THE UCP</h1>
+                <p>ULTRASONIC COMMUNICATION PROTOCOL (4-FSK DIBIT)</p>
+            </div>
+        </div>
 
-<h1>UCP — F1 / F2 Communication</h1>
+        <div class="mode-switch">
+            <button class="mode-btn active" id="sendModeBtn" onclick="showPanel('send')">Send Message</button>
+            <button class="mode-btn" id="receiveModeBtn" onclick="showPanel('receive')">Receive Message</button>
+        </div>
 
-<div class="subtitle">
-نظام ترميز بترددين فقط — Transmitter + Receiver
+        <div class="panel active" id="sendPanel">
+            <label for="textInput">Type your message</label>
+            <textarea id="textInput" placeholder="Enter text to transmit..."></textarea>
+            <button class="action-btn" id="sendBtn" onclick="transmitText()">Send</button>
+        </div>
+
+        <div class="panel" id="receivePanel">
+            <div class="status-row">
+                <span>Listening mode</span>
+                <span class="status" id="statusText">Microphone is off</span>
+            </div>
+            <button class="action-btn" id="listenBtn" onclick="startListening()">Start Listening</button>
+            <div class="result-box" id="receivedText"></div>
+        </div>
+    </div>
 </div>
-
-
-<!-- =========================
-     FREQUENCIES
-========================= -->
-
-<div class="card">
-
-<h2>الترددات</h2>
-
-<div class="frequency">
-
-<div class="freqBox">
-F1
-<strong id="f1Display">18000 Hz</strong>
-</div>
-
-<div class="freqBox">
-F2
-<strong id="f2Display">22000 Hz</strong>
-</div>
-
-</div>
-
-<div class="frequency">
-
-<div>
-
-<label>Frequency 1</label>
-
-<input
-    id="f1"
-    type="number"
-    value="18000"
->
-
-</div>
-
-<div>
-
-<label>Frequency 2</label>
-
-<input
-    id="f2"
-    type="number"
-    value="22000"
->
-
-</div>
-
-</div>
-
-<div class="small">
-1 = F1 — 2 = F2
-<br>
-الترددين متباعدين لتقليل احتمالية الخلط بينهما.
-</div>
-
-</div>
-
-
-<!-- =========================
-     TRANSMITTER
-========================= -->
-
-<div class="grid">
-
-<div class="card">
-
-<h2>Transmitter</h2>
-
-<label>الرسالة</label>
-
-<textarea id="txMessage">HELLO UCP</textarea>
-
-<label>
-مدة الرمز بالمللي ثانية
-</label>
-
-<input
-    id="symbolDuration"
-    type="number"
-    value="120"
->
-
-<label>
-الفاصل بين الرموز
-</label>
-
-<input
-    id="symbolGap"
-    type="number"
-    value="40"
->
-
-<label>
-الفاصل بين الحروف
-</label>
-
-<input
-    id="letterGap"
-    type="number"
-    value="180"
->
-
-<label>
-Volume
-</label>
-
-<input
-    id="volume"
-    type="number"
-    min="0.05"
-    max="1"
-    step="0.05"
-    value="0.7"
->
-
-<br>
-
-<button
-    class="primary"
-    onclick="startAudio()"
->
-START AUDIO
-</button>
-
-<button
-    class="primary"
-    onclick="sendMessage()"
->
-SEND
-</button>
-
-<button
-    class="stop"
-    onclick="stopTransmitter()"
->
-STOP
-</button>
-
-<div
-    class="status"
-    id="txStatus"
->
-TX: Ready
-</div>
-
-<div
-    class="status"
-    id="encodedMessage"
->
-Encoded: -
-</div>
-
-</div>
-
-
-<!-- =========================
-     RECEIVER
-========================= -->
-
-<div class="card">
-
-<h2>Receiver</h2>
-
-<button
-    class="primary"
-    onclick="startReceiver()"
->
-START MICROPHONE
-</button>
-
-<button
-    class="secondary"
-    onclick="calibrateReceiver()"
->
-CALIBRATE
-</button>
-
-<button
-    class="stop"
-    onclick="stopReceiver()"
->
-STOP
-</button>
-
-<div
-    class="status"
-    id="rxStatus"
->
-RX: Ready
-</div>
-
-<div class="live">
-
-<div class="small">
-Detected frequency
-</div>
-
-<div
-    class="liveFrequency"
-    id="liveFrequency"
->
----
-</div>
-
-<div
-    class="symbols"
-    id="liveSymbols"
->
----
-</div>
-
-</div>
-
-<div class="meter">
-<div
-    class="meterFill"
-    id="signalMeter"
-></div>
-</div>
-
-</div>
-
-</div>
-
-
-<!-- =========================
-     DECODED MESSAGE
-========================= -->
-
-<div class="card">
-
-<h2>الناتج المستقبَل</h2>
-
-<div
-    class="message"
-    id="decodedMessage"
->
-Waiting...
-</div>
-
-</div>
-
-
-<!-- =========================
-     TABLE
-========================= -->
-
-<div class="card">
-
-<h2>جدول الترميز</h2>
-
-<div class="small">
-تقدر تغير أي حرف مباشرة من الجزء الخاص بـ CODE_TABLE في الكود.
-</div>
-
-<div class="tableWrap">
-
-<table>
-
-<thead>
-
-<tr>
-<th>الحرف</th>
-<th>الترميز</th>
-</tr>
-
-</thead>
-
-<tbody id="codeTableBody"></tbody>
-
-</table>
-
-</div>
-
-</div>
-
-
-<!-- =========================
-     DEBUG
-========================= -->
-
-<div class="card">
-
-<h2>Debug</h2>
-
-<div
-    class="debug"
-    id="debug"
->
-System ready.
-</div>
-
-</div>
-
-
-</div>
-
 
 <script>
+    // خريطة الترددات لنظام 4-FSK مع مسافة واسعة جداً لمنع أي تداخل
+    const FREQS = {
+        START: 17500, // نغمة بداية الحزمة (HEADER)
+        '00':  18500,
+        '01':  19000,
+        '10':  19500,
+        '11':  20000
+    };
 
-/*
-===========================================================
- UCP F1 / F2 PROTOCOL
-===========================================================
+    const TONE_DURATION = 0.08; // 80ms لكل نغمة
+    const PAUSE_DURATION = 0.02; // 20ms فاصل
 
-F1 = 18000 Hz
-F2 = 22000 Hz
-
-1 = F1
-2 = F2
-
-Example:
-
-A = 1
-B = 12
-C = 21
-D = 22
-
-There are TWO types of gaps:
-
-SYMBOL GAP:
-between symbols of the same letter
-
-LETTER GAP:
-between letters
-
-Example:
-
-B = 1 2
-
-A B C
-
-1 | 12 | 21
-
-===========================================================
-*/
-
-
-/* ========================================================
-   SETTINGS
-======================================================== */
-
-let F1 = 18000;
-let F2 = 22000;
-
-
-/*
-===========================================================
-   CHARACTER TABLE
-
-   هنا تقدر تغير الترميز براحتك.
-
-   مثال:
-
-   A = "1"
-   B = "12"
-   C = "21"
-
-===========================================================
-*/
-
-const CODE_TABLE = {
-
-    "A":"1",
-    "B":"12",
-    "C":"21",
-    "D":"22",
-
-    "E":"11",
-    "F":"112",
-    "G":"121",
-    "H":"122",
-
-    "I":"211",
-    "J":"212",
-    "K":"221",
-    "L":"222",
-
-    "M":"111",
-    "N":"1112",
-    "O":"1121",
-    "P":"1122",
-
-    "Q":"1211",
-    "R":"1212",
-    "S":"1221",
-    "T":"1222",
-
-    "U":"2111",
-    "V":"2112",
-    "W":"2121",
-    "X":"2122",
-
-    "Y":"2211",
-    "Z":"2212",
-
-    "0":"2221",
-    "1":"2222",
-
-    "2":"11111",
-    "3":"11112",
-    "4":"11121",
-    "5":"11122",
-
-    "6":"11211",
-    "7":"11212",
-    "8":"11221",
-    "9":"11222"
-
-};
-
-
-/*
-===========================================================
-   REVERSE TABLE
-===========================================================
-*/
-
-let REVERSE_TABLE = {};
-
-function rebuildReverseTable(){
-
-    REVERSE_TABLE = {};
-
-    for(
-        const char in CODE_TABLE
-    ){
-
-        const code =
-            CODE_TABLE[char];
-
-        REVERSE_TABLE[code] =
-            char;
-
+    function showPanel(mode) {
+        document.getElementById('sendPanel').classList.toggle('active', mode === 'send');
+        document.getElementById('receivePanel').classList.toggle('active', mode === 'receive');
+        document.getElementById('sendModeBtn').classList.toggle('active', mode === 'send');
+        document.getElementById('receiveModeBtn').classList.toggle('active', mode === 'receive');
     }
 
-}
-
-
-/*
-===========================================================
-   DOM
-===========================================================
-*/
-
-const f1Input =
-    document.getElementById("f1");
-
-const f2Input =
-    document.getElementById("f2");
-
-const f1Display =
-    document.getElementById("f1Display");
-
-const f2Display =
-    document.getElementById("f2Display");
-
-const txMessage =
-    document.getElementById("txMessage");
-
-const symbolDuration =
-    document.getElementById("symbolDuration");
-
-const symbolGap =
-    document.getElementById("symbolGap");
-
-const letterGap =
-    document.getElementById("letterGap");
-
-const volume =
-    document.getElementById("volume");
-
-const txStatus =
-    document.getElementById("txStatus");
-
-const rxStatus =
-    document.getElementById("rxStatus");
-
-const encodedMessage =
-    document.getElementById("encodedMessage");
-
-const decodedMessage =
-    document.getElementById("decodedMessage");
-
-const liveFrequency =
-    document.getElementById("liveFrequency");
-
-const liveSymbols =
-    document.getElementById("liveSymbols");
-
-const signalMeter =
-    document.getElementById("signalMeter");
-
-const debug =
-    document.getElementById("debug");
-
-
-
-/*
-===========================================================
-   AUDIO
-===========================================================
-*/
-
-let audioContext = null;
-
-
-/*
-===========================================================
-   TRANSMITTER
-===========================================================
-*/
-
-let txOscillator = null;
-let txGain = null;
-let transmitting = false;
-
-
-
-/*
-===========================================================
-   RECEIVER
-===========================================================
-*/
-
-let receiverStream = null;
-let receiverSource = null;
-let analyser = null;
-
-let receiverRunning = false;
-let receiverAnimation = null;
-
-
-/*
-===========================================================
-   RECEIVER DECODING
-===========================================================
-*/
-
-let currentSymbolString = "";
-
-let receivedLetters = [];
-
-let symbolActive = false;
-
-let symbolStartTime = 0;
-
-let lastSymbolEnd = 0;
-
-let currentFrequency = null;
-
-let noiseFloor = 0.0001;
-
-
-/*
-===========================================================
-   TIMING
-
-   IMPORTANT:
-
-   The receiver uses the gaps to determine
-   when one symbol / letter ends.
-===========================================================
-*/
-
-const RECEIVER_SYMBOL_GAP = 90;
-const RECEIVER_LETTER_GAP = 250;
-
-
-/*
-===========================================================
-   UTIL
-===========================================================
-*/
-
-function sleep(ms){
-
-    return new Promise(
-        resolve => setTimeout(resolve,ms)
-    );
-
-}
-
-
-function log(text){
-
-    const line =
-        document.createElement("div");
-
-    line.textContent =
-        new Date()
-        .toLocaleTimeString() +
-        "  " +
-        text;
-
-    debug.appendChild(line);
-
-    debug.scrollTop =
-        debug.scrollHeight;
-
-}
-
-
-
-/*
-===========================================================
-   UPDATE FREQUENCIES
-===========================================================
-*/
-
-function updateFrequencies(){
-
-    F1 =
-        Number(f1Input.value);
-
-    F2 =
-        Number(f2Input.value);
-
-    f1Display.textContent =
-        F1 + " Hz";
-
-    f2Display.textContent =
-        F2 + " Hz";
-
-}
-
-
-f1Input.addEventListener(
-    "change",
-    updateFrequencies
-);
-
-f2Input.addEventListener(
-    "change",
-    updateFrequencies
-);
-
-
-
-/*
-===========================================================
-   DRAW TABLE
-===========================================================
-*/
-
-function drawTable(){
-
-    const body =
-        document.getElementById(
-            "codeTableBody"
-        );
-
-    body.innerHTML = "";
-
-
-    for(
-        const char in CODE_TABLE
-    ){
-
-        const row =
-            document.createElement("tr");
-
-        const c =
-            document.createElement("td");
-
-        const code =
-            document.createElement("td");
-
-        c.textContent =
-            char;
-
-        code.innerHTML =
-            "<code>" +
-            CODE_TABLE[char] +
-            "</code>";
-
-        row.appendChild(c);
-        row.appendChild(code);
-
-        body.appendChild(row);
-
-    }
-
-}
-
-
-
-/*
-===========================================================
-   TEXT TO CODE
-===========================================================
-*/
-
-function encodeText(text){
-
-    let result = [];
-
-    text =
-        text.toUpperCase();
-
-
-    for(
-        const char of text
-    ){
-
-        /*
-        Space = special letter separator.
-        */
-
-        if(char === " "){
-
-            result.push({
-                char:" ",
-                code:""
-            });
-
-            continue;
-
-        }
-
-
-        if(
-            CODE_TABLE[char]
-        ){
-
-            result.push({
-                char:char,
-                code:CODE_TABLE[char]
-            });
-
-        }
-
-    }
-
-
-    return result;
-
-}
-
-
-
-/*
-===========================================================
-   SHOW ENCODING
-===========================================================
-*/
-
-function showEncoding(){
-
-    const encoded =
-        encodeText(
-            txMessage.value
-        );
-
-
-    let text = "";
-
-
-    for(
-        const item of encoded
-    ){
-
-        if(item.char === " "){
-
-            text += " / ";
-
-        }else{
-
-            text +=
-                item.char +
-                "=" +
-                item.code +
-                "  ";
-
-        }
-
-    }
-
-
-    encodedMessage.textContent =
-        "Encoded: " + text;
-
-}
-
-
-
-/*
-===========================================================
-   CREATE AUDIO CONTEXT
-===========================================================
-*/
-
-async function startAudio(){
-
-    try{
-
-        updateFrequencies();
-
-        if(!audioContext){
-
-            audioContext =
-                new (
-                    window.AudioContext ||
-                    window.webkitAudioContext
-                )();
-
-        }
-
-
-        if(
-            audioContext.state ===
-            "suspended"
-        ){
-
-            await audioContext.resume();
-
-        }
-
-
-        txStatus.textContent =
-            "TX: Audio ready\n" +
-            "F1 = " + F1 + " Hz\n" +
-            "F2 = " + F2 + " Hz\n" +
-            "Sample Rate = " +
-            audioContext.sampleRate;
-
-    }
-    catch(error){
-
-        txStatus.textContent =
-            "Audio error: " +
-            error.message;
-
-    }
-
-}
-
-
-
-/*
-===========================================================
-   SEND ONE FREQUENCY SYMBOL
-===========================================================
-*/
-
-async function sendFrequency(
-    frequency,
-    duration
-){
-
-    if(!audioContext){
-        await startAudio();
-    }
-
-
-    return new Promise(
-        resolve => {
-
-            const osc =
-                audioContext.createOscillator();
-
-            const gain =
-                audioContext.createGain();
-
-
-            osc.type =
-                "sine";
-
-
-            osc.frequency.value =
-                frequency;
-
-
-            const now =
-                audioContext.currentTime;
-
-
-            const d =
-                duration / 1000;
-
-
-            /*
-            Fade in/out prevents clicks.
-            */
-
-            gain.gain.setValueAtTime(
-                0,
-                now
-            );
-
-            gain.gain.linearRampToValueAtTime(
-                Number(volume.value),
-                now + 0.008
-            );
-
-            gain.gain.setValueAtTime(
-                Number(volume.value),
-                now + d - 0.008
-            );
-
-            gain.gain.linearRampToValueAtTime(
-                0,
-                now + d
-            );
-
+    // إرسال نغمة جيبية منفردة
+    function playTone(audioCtx, freq, duration) {
+        return new Promise(resolve => {
+            let osc = audioCtx.createOscillator();
+            let gain = audioCtx.createGain();
+
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+            // Smooth Envelope لمحو صوت الضغط "Clicks"
+            gain.gain.setValueAtTime(0, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.5, audioCtx.currentTime + 0.01);
+            gain.gain.setValueAtTime(0.5, audioCtx.currentTime + duration - 0.01);
+            gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + duration);
 
             osc.connect(gain);
-
-            gain.connect(
-                audioContext.destination
-            );
-
+            gain.connect(audioCtx.destination);
 
             osc.start();
+            osc.stop(audioCtx.currentTime + duration);
 
-            osc.stop(
-                now + d + 0.01
-            );
-
-
-            setTimeout(
-                resolve,
-                duration
-            );
-
-        }
-    );
-
-}
-
-
-
-/*
-===========================================================
-   SEND MESSAGE
-===========================================================
-*/
-
-async function sendMessage(){
-
-    if(transmitting){
-        return;
+            setTimeout(resolve, (duration + PAUSE_DURATION) * 1000);
+        });
     }
 
+    // تحويل النص إلى سلسلة بتات وإرسالها
+    async function transmitText() {
+        const text = document.getElementById('textInput').value;
+        if (!text) return;
 
-    await startAudio();
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        document.getElementById('sendBtn').disabled = true;
 
+        // إرسال نغمة البداية للتنبيه
+        await playTone(audioCtx, FREQS.START, 0.15);
 
-    const text =
-        txMessage.value;
+        for (let char of text) {
+            let code = char.charCodeAt(0);
+            let bin = code.toString(2).padStart(8, '0'); // تحويل إلى 8 بت
 
+            // تقسيم البتات الثمانية إلى 4 أجزاء ثنائية (Dibits)
+            let dibits = [
+                bin.substring(0, 2),
+                bin.substring(2, 4),
+                bin.substring(4, 6),
+                bin.substring(6, 8)
+            ];
 
-    if(!text.trim()){
-
-        txStatus.textContent =
-            "Write a message first.";
-
-        return;
-
-    }
-
-
-    const encoded =
-        encodeText(text);
-
-
-    showEncoding();
-
-
-    transmitting = true;
-
-
-    txStatus.textContent =
-        "TX: Sending...\n";
-
-
-    /*
-    ============================================
-       SEND EACH LETTER
-    ============================================
-    */
-
-    for(
-        let letterIndex = 0;
-        letterIndex < encoded.length;
-        letterIndex++
-    ){
-
-        if(!transmitting){
-            break;
-        }
-
-
-        const item =
-            encoded[letterIndex];
-
-
-        /*
-        SPACE
-        */
-
-        if(item.char === " "){
-
-            await sleep(
-                Number(letterGap.value) * 2
-            );
-
-            continue;
-
-        }
-
-
-        txStatus.textContent =
-            "TX: Sending letter " +
-            item.char +
-            "\nCode: " +
-            item.code;
-
-
-        /*
-        ========================================
-        SEND SYMBOLS
-        ========================================
-        */
-
-        for(
-            let i = 0;
-            i < item.code.length;
-            i++
-        ){
-
-            if(!transmitting){
-                break;
+            for (let dibit of dibits) {
+                let freq = FREQS[dibit];
+                await playTone(audioCtx, freq, TONE_DURATION);
             }
-
-
-            const symbol =
-                item.code[i];
-
-
-            const frequency =
-                symbol === "1"
-                ? F1
-                : F2;
-
-
-            await sendFrequency(
-                frequency,
-                Number(
-                    symbolDuration.value
-                )
-            );
-
-
-            /*
-            Gap inside letter.
-            */
-
-            if(
-                i <
-                item.code.length - 1
-            ){
-
-                await sleep(
-                    Number(
-                        symbolGap.value
-                    )
-                );
-
-            }
-
         }
 
-
-        /*
-        ========================================
-        LETTER GAP
-        ========================================
-        */
-
-        await sleep(
-            Number(
-                letterGap.value
-            )
-        );
-
+        document.getElementById('sendBtn').disabled = false;
     }
 
+    // --- قسم الاستقبال (Decoder) ---
+    let isListening = false;
+    let audioContext, analyser, stream;
+    let receivedBits = [];
+    let isReceivingFrame = false;
 
-    transmitting = false;
+    async function startListening() {
+        if (isListening) return;
 
-
-    txStatus.textContent =
-        "TX: Complete";
-
-}
-
-
-
-/*
-===========================================================
-   STOP TX
-===========================================================
-*/
-
-function stopTransmitter(){
-
-    transmitting = false;
-
-
-    if(txOscillator){
-
-        try{
-            txOscillator.stop();
-        }catch(e){}
-
-        txOscillator = null;
-
-    }
-
-
-    if(txGain){
-
-        txGain.disconnect();
-
-        txGain = null;
-
-    }
-
-
-    txStatus.textContent =
-        "TX: Stopped";
-
-}
-
-
-
-/*
-===========================================================
-   RECEIVER START
-===========================================================
-*/
-
-async function startReceiver(){
-
-    if(receiverRunning){
-        return;
-    }
-
-
-    try{
-
-        updateFrequencies();
-
-
-        if(!audioContext){
-
-            audioContext =
-                new (
-                    window.AudioContext ||
-                    window.webkitAudioContext
-                )();
-
-        }
-
-
-        if(
-            audioContext.state ===
-            "suspended"
-        ){
-
-            await audioContext.resume();
-
-        }
-
-
-        receiverStream =
-            await navigator
-            .mediaDevices
-            .getUserMedia({
-
-                audio:{
-                    channelCount:1,
-
-                    echoCancellation:false,
-
-                    noiseSuppression:false,
-
-                    autoGainControl:false
-                }
-
+        try {
+            stream = await navigator.mediaDevices.getUserMedia({
+                audio: {
+                    echoCancellation: false,
+                    noiseSuppression: false,
+                    autoGainControl: false
+                },
+                video: false
             });
 
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            analyser = audioContext.createAnalyser();
+            analyser.fftSize = 2048; // كافي جداً لأن الفارق بين الترددات كبير (500Hz)
 
-        receiverSource =
-            audioContext
-            .createMediaStreamSource(
-                receiverStream
-            );
+            let source = audioContext.createMediaStreamSource(stream);
+            source.connect(analyser);
 
+            isListening = true;
+            document.getElementById('statusText').innerText = "Listening now...";
+            document.getElementById('receivedText').innerText = "";
+            document.getElementById('listenBtn').disabled = true;
 
-        analyser =
-            audioContext
-            .createAnalyser();
-
-
-        /*
-        8192 gives better resolution
-        around ultrasonic frequencies.
-        */
-
-        analyser.fftSize =
-            8192;
-
-
-        analyser.smoothingTimeConstant =
-            0;
-
-
-        receiverSource.connect(
-            analyser
-        );
-
-
-        receiverRunning = true;
-
-
-        currentSymbolString = "";
-
-        receivedLetters = [];
-
-        liveSymbols.textContent =
-            "---";
-
-
-        decodedMessage.textContent =
-            "Listening...";
-
-
-        rxStatus.textContent =
-            "RX: Microphone active\n" +
-            "Looking for F1 / F2";
-
-
-        log(
-            "Receiver started."
-        );
-
-
-        receiverAnimation =
-            requestAnimationFrame(
-                receiverLoop
-            );
-
-    }
-    catch(error){
-
-        rxStatus.textContent =
-            "Microphone error:\n" +
-            error.message;
-
-    }
-
-}
-
-
-
-/*
-===========================================================
-   CALIBRATE
-===========================================================
-*/
-
-async function calibrateReceiver(){
-
-    if(!analyser){
-
-        rxStatus.textContent =
-            "Start microphone first.";
-
-        return;
-
-    }
-
-
-    rxStatus.textContent =
-        "RX: Calibrating...\n" +
-        "Do not transmit.";
-
-
-    let total = 0;
-
-
-    const buffer =
-        new Float32Array(
-            analyser.fftSize
-        );
-
-
-    for(
-        let i=0;
-        i<40;
-        i++
-    ){
-
-        analyser.getFloatTimeDomainData(
-            buffer
-        );
-
-
-        let sum = 0;
-
-
-        for(
-            let j=0;
-            j<buffer.length;
-            j++
-        ){
-
-            sum +=
-                Math.abs(
-                    buffer[j]
-                );
-
+            processAudio();
+        } catch (err) {
+            alert("Please allow microphone access.");
+            console.error(err);
         }
-
-
-        total +=
-            sum /
-            buffer.length;
-
-
-        await sleep(20);
-
     }
 
-
-    noiseFloor =
-        total / 40;
-
-
-    rxStatus.textContent =
-        "RX: Calibration complete\n" +
-        "Noise = " +
-        noiseFloor.toFixed(6);
-
-
-    log(
-        "Noise floor = " +
-        noiseFloor
-    );
-
-}
-
-
-
-/*
-===========================================================
-   GOERTZEL
-===========================================================
-*/
-
-function goertzel(
-    buffer,
-    frequency
-){
-
-    const sampleRate =
-        audioContext.sampleRate;
-
-
-    const k =
-        Math.round(
-            buffer.length *
-            frequency /
-            sampleRate
-        );
-
-
-    const omega =
-        2 *
-        Math.PI *
-        k /
-        buffer.length;
-
-
-    const coeff =
-        2 *
-        Math.cos(omega);
-
-
-    let q0 = 0;
-    let q1 = 0;
-    let q2 = 0;
-
-
-    for(
-        let i=0;
-        i<buffer.length;
-        i++
-    ){
-
-        q0 =
-            coeff * q1 -
-            q2 +
-            buffer[i];
-
-        q2 = q1;
-        q1 = q0;
-
-    }
-
-
-    return Math.sqrt(
-        q1*q1 +
-        q2*q2 -
-        coeff*q1*q2
-    ) /
-    buffer.length;
-
-}
-
-
-
-/*
-===========================================================
-   RECEIVER LOOP
-===========================================================
-*/
-
-function receiverLoop(){
-
-    if(!receiverRunning){
-        return;
-    }
-
-
-    const buffer =
-        new Float32Array(
-            analyser.fftSize
-        );
-
-
-    analyser.getFloatTimeDomainData(
-        buffer
-    );
-
-
-    const energy1 =
-        goertzel(
-            buffer,
-            F1
-        );
-
-
-    const energy2 =
-        goertzel(
-            buffer,
-            F2
-        );
-
-
-    const strongest =
-        Math.max(
-            energy1,
-            energy2
-        );
-
-
-    /*
-    Visual meter.
-    */
-
-    const meterValue =
-        Math.min(
-            100,
-            strongest * 5000
-        );
-
-
-    signalMeter.style.width =
-        meterValue + "%";
-
-
-    /*
-    Dynamic threshold.
-
-    We require the carrier to be
-    clearly stronger than noise.
-    */
-
-    const threshold =
-        Math.max(
-            0.003,
-            noiseFloor * 5
-        );
-
-
-    let detected = null;
-
-
-    /*
-    IMPORTANT:
-    Require one frequency to be
-    clearly stronger than the other.
-    */
-
-    if(
-        strongest > threshold
-    ){
-
-        if(
-            energy1 >
-            energy2 * 1.45
-        ){
-
-            detected = 1;
-
-        }
-        else if(
-            energy2 >
-            energy1 * 1.45
-        ){
-
-            detected = 2;
-
-        }
-
-    }
-
-
-    /*
-    ============================================
-       ACTIVE SYMBOL
-    ============================================
-    */
-
-    if(detected !== null){
-
-        const now =
-            performance.now();
-
-
-        if(!symbolActive){
-
-            symbolActive = true;
-
-            symbolStartTime =
-                now;
-
-            currentFrequency =
-                detected;
-
-
-            liveFrequency.textContent =
-                detected === 1
-                ? F1 + " Hz  →  1"
-                : F2 + " Hz  →  2";
-
-        }
-        else{
-
-            /*
-            If frequency changes while
-            signal is still active,
-            close previous symbol.
-            */
-
-            if(
-                detected !==
-                currentFrequency
-            ){
-
-                finishSymbol();
-
-                symbolActive = true;
-
-                symbolStartTime =
-                    now;
-
-                currentFrequency =
-                    detected;
-
+    function processAudio() {
+        if (!isListening) return;
+
+        const bufferLength = analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+        analyser.getByteFrequencyData(dataArray);
+
+        // البحث عن أعلى تردد مستقبَل
+        let maxVal = 0;
+        let maxFreq = 0;
+
+        for (let i = 0; i < bufferLength; i++) {
+            let freq = i * (audioContext.sampleRate / 2) / bufferLength;
+            if (freq >= 17000 && freq <= 20500) {
+                if (dataArray[i] > maxVal) {
+                    maxVal = dataArray[i];
+                    maxFreq = freq;
+                }
             }
-
         }
 
-    }
-    else{
+        // فحص ما إذا كانت هناك إشارة قوية
+        if (maxVal > 50) {
+            let detectedDibit = matchFrequency(maxFreq);
 
-        /*
-        ========================================
-        NO SIGNAL
-        ========================================
-        */
+            if (detectedDibit === 'START') {
+                isReceivingFrame = true;
+                receivedBits = [];
+            } else if (isReceivingFrame && detectedDibit) {
+                // إدخال الـ Dibit إذا كان يختلف عن السابق لتجنب تكرار الإطار الواحدة
+                if (receivedBits.length === 0 || receivedBits[receivedBits.length - 1] !== detectedDibit) {
+                    receivedBits.push(detectedDibit);
 
-        if(symbolActive){
-
-            const now =
-                performance.now();
-
-
-            const elapsed =
-                now -
-                symbolStartTime;
-
-
-            /*
-            Require a minimum pulse.
-            */
-
-            if(
-                elapsed > 45
-            ){
-
-                finishSymbol();
-
+                    // كل 4 Dibits تشكل حرفاً كاملاً (8 bits)
+                    if (receivedBits.length % 4 === 0) {
+                        let fullBin = receivedBits.slice(-4).join('');
+                        let charCode = parseInt(fullBin, 2);
+                        let char = String.fromCharCode(charCode);
+                        
+                        document.getElementById('receivedText').innerText += char;
+                    }
+                }
             }
-
         }
 
-
-        /*
-        ========================================
-        LETTER GAP
-        ========================================
-        */
-
-        if(
-            currentSymbolString &&
-            !symbolActive &&
-            performance.now() -
-            lastSymbolEnd >
-            RECEIVER_LETTER_GAP
-        ){
-
-            finishLetter();
-
-        }
-
-
-        liveFrequency.textContent =
-            "---";
-
+        requestAnimationFrame(processAudio);
     }
 
+    // مطابقة التردد المستقبَل مع أقرب Dibit
+    function matchFrequency(freq) {
+        let tolerance = 150; // هامش خطأ للتردد
 
-    receiverAnimation =
-        requestAnimationFrame(
-            receiverLoop
-        );
+        if (Math.abs(freq - FREQS.START) < tolerance) return 'START';
+        if (Math.abs(freq - FREQS['00']) < tolerance) return '00';
+        if (Math.abs(freq - FREQS['01']) < tolerance) return '01';
+        if (Math.abs(freq - FREQS['10']) < tolerance) return '10';
+        if (Math.abs(freq - FREQS['11']) < tolerance) return '11';
 
-}
-
-
-
-/*
-===========================================================
-   FINISH SYMBOL
-===========================================================
-*/
-
-function finishSymbol(){
-
-    if(!symbolActive){
-        return;
+        return null;
     }
-
-
-    const duration =
-        performance.now() -
-        symbolStartTime;
-
-
-    const symbol =
-        currentFrequency;
-
-
-    /*
-    Only accept reasonable pulse length.
-    */
-
-    if(
-        duration >= 45 &&
-        duration <= 180
-    ){
-
-        currentSymbolString +=
-            symbol;
-
-
-        liveSymbols.textContent =
-            currentSymbolString;
-
-
-        log(
-            "SYMBOL: " +
-            symbol +
-            " | " +
-            duration.toFixed(1) +
-            " ms"
-        );
-
-    }
-
-
-    lastSymbolEnd =
-        performance.now();
-
-
-    symbolActive = false;
-
-    currentFrequency = null;
-
-}
-
-
-
-/*
-===========================================================
-   FINISH LETTER
-===========================================================
-*/
-
-function finishLetter(){
-
-    if(
-        !currentSymbolString
-    ){
-        return;
-    }
-
-
-    const code =
-        currentSymbolString;
-
-
-    const char =
-        REVERSE_TABLE[code];
-
-
-    if(char){
-
-        receivedLetters.push(
-            char
-        );
-
-
-        decodedMessage.textContent =
-            receivedLetters.join("");
-
-
-        log(
-            "LETTER: " +
-            char +
-            "  [" +
-            code +
-            "]"
-        );
-
-
-    }
-    else{
-
-        log(
-            "UNKNOWN CODE: " +
-            code
-        );
-
-    }
-
-
-    currentSymbolString = "";
-
-    liveSymbols.textContent =
-        "---";
-
-}
-
-
-
-/*
-===========================================================
-   STOP RECEIVER
-===========================================================
-*/
-
-function stopReceiver(){
-
-    receiverRunning = false;
-
-
-    if(receiverAnimation){
-
-        cancelAnimationFrame(
-            receiverAnimation
-        );
-
-        receiverAnimation = null;
-
-    }
-
-
-    if(
-        symbolActive
-    ){
-
-        finishSymbol();
-
-    }
-
-
-    finishLetter();
-
-
-    if(receiverStream){
-
-        receiverStream
-        .getTracks()
-        .forEach(
-            track => track.stop()
-        );
-
-        receiverStream = null;
-
-    }
-
-
-    if(receiverSource){
-
-        receiverSource.disconnect();
-
-        receiverSource = null;
-
-    }
-
-
-    analyser = null;
-
-
-    rxStatus.textContent =
-        "RX: Stopped";
-
-
-    signalMeter.style.width =
-        "0%";
-
-}
-
-
-
-/*
-===========================================================
-   INITIALIZATION
-===========================================================
-*/
-
-rebuildReverseTable();
-
-drawTable();
-
-updateFrequencies();
-
-showEncoding();
-
-
-/*
-===========================================================
-   DEBUG INITIAL MESSAGE
-===========================================================
-*/
-
-log(
-    "UCP F1/F2 receiver ready."
-);
-
-log(
-    "F1 = " + F1 + " Hz"
-);
-
-log(
-    "F2 = " + F2 + " Hz"
-);
-
-log(
-    "1 = F1"
-);
-
-log(
-    "2 = F2"
-);
-
 </script>
 
 </body>
