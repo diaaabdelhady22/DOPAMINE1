@@ -7,6 +7,8 @@
   <title>DOPAMINE — Chemistry Learning Platform</title>
   <meta name="description" content="DOPAMINE chemistry learning platform with Mr. Ahmed Dorar.">
   <link rel="icon" type="image/png" href="icon.png">
+  <link rel="apple-touch-icon" href="dopamine-icon-192.png">
+  <link rel="manifest" href="manifest.webmanifest">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0" rel="stylesheet">
@@ -44,6 +46,7 @@
     .mobile-nav button{display:flex;width:100%;align-items:center;gap:10px;text-align:left;border:0;background:transparent;padding:13px 9px;border-radius:8px;color:var(--navy);opacity:0;transform:translateY(-5px);transition:opacity .2s ease,transform .24s ease,background .18s ease}
     .mobile-nav.open button{opacity:1;transform:translateY(0)}
     .mobile-nav.open button:nth-child(1){transition-delay:.02s}.mobile-nav.open button:nth-child(2){transition-delay:.045s}.mobile-nav.open button:nth-child(3){transition-delay:.07s}.mobile-nav.open button:nth-child(4){transition-delay:.095s}.mobile-nav.open button:nth-child(5){transition-delay:.12s}
+    .mobile-nav.open button:nth-child(6){transition-delay:.145s}.mobile-nav.open button:nth-child(7){transition-delay:.17s}
     .mobile-nav button:hover{background:var(--soft)}
 
     .notifications-list{display:grid;gap:10px;max-width:900px;margin:24px auto 0 0}.notification-item{display:flex;gap:14px;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:0 6px 18px rgba(20,38,61,.04)}.notification-icon{width:42px;height:42px;border-radius:11px;background:#fff3e9;color:var(--orange);display:grid;place-items:center;flex:none}.notification-icon.is-error{background:#fff0f0;color:var(--danger)}.notification-icon.is-success{background:#eefaf5;color:var(--success)}.notification-copy strong{display:block;font-size:15px;margin-bottom:4px}.notification-copy p{margin:0;color:var(--muted);font-size:13px;line-height:1.6}.notification-copy small{display:block;margin-top:8px;color:var(--muted);font-size:11px}@media(max-width:700px){.notifications-list{margin-top:18px}.notification-item{padding:14px}.notification-icon{width:38px;height:38px}.notification-copy strong{font-size:14px}}
@@ -442,14 +445,14 @@
     setDoc, addDoc, updateDoc, serverTimestamp, limit
   } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-lite.js";
 
- const firebaseConfig = {
-  apiKey: "AIzaSyDD1T_ssoVaIyIf_wYAs7Tj_G0pFdr1IlI",
-  authDomain: "dorar-17b10.firebaseapp.com",
-  projectId: "dorar-17b10",
-  storageBucket: "dorar-17b10.firebasestorage.app",
-  messagingSenderId: "740800324300",
-  appId: "1:740800324300:web:cd819b2910a53475af5869"
-};
+  const firebaseConfig = {
+    apiKey: "AIzaSyDD1_ssoVaIyIfwYAs7jT_g0pFdr1IlI",
+    authDomain: "dorar-17b10.firebaseapp.com",
+    projectId: "dorar-17b10",
+    storageBucket: "dorar-17b10.firebasestorage.app",
+    messagingSenderId: "740800324300",
+    appId: "1:740800324300:web:cd819b2910a53475af5869"
+  };
 
   const app = initializeApp(firebaseConfig);
   // Firestore Lite uses normal HTTPS requests instead of the realtime WebChannel.
@@ -497,6 +500,43 @@
     showToast.t = setTimeout(() => el.classList.remove("show"), 3200);
   }
 
+  let deferredInstallPrompt = null;
+  function updateInstallButton(){
+    const isInstalled = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+    document.querySelectorAll(".install-app-button").forEach(button => { button.hidden = isInstalled; });
+  }
+
+  window.addEventListener("beforeinstallprompt", event => {
+    event.preventDefault();
+    deferredInstallPrompt = event;
+  });
+  window.addEventListener("appinstalled", () => {
+    deferredInstallPrompt = null;
+    updateInstallButton();
+    showToast("DOPAMINE has been installed.");
+  });
+  window.installApp = async function(){
+    if(!deferredInstallPrompt){
+      const isInstalled = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+      showToast(isInstalled
+        ? "DOPAMINE is already installed."
+        : "Open your browser menu and choose Install app or Add to Home Screen.");
+      return;
+    }
+
+    const installPrompt = deferredInstallPrompt;
+    deferredInstallPrompt = null;
+    try{
+      await installPrompt.prompt();
+      const choice = await installPrompt.userChoice;
+      showToast(choice.outcome === "accepted" ? "Installing DOPAMINE..." : "Installation was canceled.");
+    }catch(error){
+      console.error("Could not start the DOPAMINE installation prompt:", error);
+      showToast("Could not start the installation. Try your browser menu.");
+    }
+    updateInstallButton();
+  };
+
   function setView(id, html){
     document.querySelectorAll(".page-view").forEach(v => {
       v.classList.toggle("active", v.id === "view-" + id);
@@ -537,6 +577,7 @@
             <button onclick="openTeacherAbout()"><span class="mi">person</span> About Teacher</button>
             <button onclick="navigate('contact')"><span class="mi">mail</span> Contact</button>
             <button onclick="navigate('login')"><span class="mi">login</span> Login</button>
+            <button class="install-app-button" onclick="installApp()"><span class="mi">download</span> Download</button>
             <button class="primary" onclick="navigate('register')"><span class="mi">person_add</span> Register</button>
           </nav>
           <button class="mobile-menu" onclick="toggleMobileNav()" aria-label="Open menu"><span class="mi">menu</span></button>
@@ -546,6 +587,7 @@
           <button onclick="openTeacherAbout();closeMobileNav()"><span class="mi">person</span> About Teacher</button>
           <button onclick="navigate('contact');closeMobileNav()"><span class="mi">mail</span> Contact</button>
           <button onclick="navigate('login');closeMobileNav()"><span class="mi">login</span> Login</button>
+          <button class="install-app-button" onclick="installApp();closeMobileNav()"><span class="mi">download</span> Download DOPAMINE</button>
           <button onclick="navigate('register');closeMobileNav()"><span class="mi">person_add</span> Register</button>
         </div>`;
     }else{
@@ -561,6 +603,7 @@
             <button onclick="navigate('notifications')"><span class="mi">notifications</span> Notifications</button>
             <button onclick="navigate('profile')"><span class="mi">account_circle</span> Profile</button>
             <button onclick="navigate('settings')"><span class="mi">settings</span> Settings</button>
+            <button class="install-app-button" onclick="installApp()"><span class="mi">download</span> Download</button>
                                   </nav>
           <button class="mobile-menu" onclick="toggleMobileNav()" aria-label="Open menu"><span class="mi">menu</span></button>
         </div>
@@ -571,8 +614,10 @@
           <button onclick="navigate('notifications');closeMobileNav()"><span class="mi">notifications</span> Notifications</button>
           <button onclick="navigate('profile');closeMobileNav()"><span class="mi">account_circle</span> Profile</button>
           <button onclick="navigate('settings');closeMobileNav()"><span class="mi">settings</span> Settings</button>
+          <button class="install-app-button" onclick="installApp();closeMobileNav()"><span class="mi">download</span> Download DOPAMINE</button>
                             </div>`;
     }
+    updateInstallButton();
   }
 
   window.toggleMobileNav = () => {
@@ -1496,6 +1541,11 @@ async function profileView(){
 
   window.addEventListener("popstate",renderRoute);
   window.addEventListener("hashchange",renderRoute);
+  if("serviceWorker" in navigator){
+    navigator.serviceWorker.register("./sw.js").catch(error => {
+      console.error("DOPAMINE service worker registration failed:", error);
+    });
+  }
 
   (async function boot(){
     try{
