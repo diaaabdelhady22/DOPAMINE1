@@ -147,6 +147,21 @@
     .simple-footer{background:#fff;border-top:1px solid var(--line);padding:28px 0;color:#788596;font-size:13px}
     .simple-footer .container{display:flex;justify-content:space-between;gap:20px}
 
+    /* Teacher verification success */
+    .verification-success{min-height:calc(100vh - 76px);display:grid;place-items:center;padding:36px 18px;background:#fff}
+    .verification-card{width:min(560px,100%);text-align:center;padding:38px 26px;border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);animation:authEnter .45s ease both}
+    .verification-check{width:104px;height:104px;margin:0 auto 24px;border-radius:50%;background:#19a96b;color:#fff;display:grid;place-items:center;position:relative;box-shadow:0 0 0 0 rgba(25,169,107,.28);animation:checkPop .65s cubic-bezier(.18,.89,.32,1.35) both,checkHalo 1.2s .35s ease-out both}
+    .verification-check svg{width:68px;height:68px;overflow:visible}
+    .verification-check .check-circle{fill:none;stroke:rgba(255,255,255,.35);stroke-width:1.8;transform-origin:center;animation:circleSpin .7s ease-out both}
+    .verification-check .check-mark{fill:none;stroke:#fff;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:42;stroke-dashoffset:42;animation:checkStroke .52s .42s cubic-bezier(.65,0,.45,1) forwards}
+    @keyframes checkPop{0%{transform:scale(.25) rotate(-18deg);opacity:0}65%{transform:scale(1.12) rotate(4deg);opacity:1}100%{transform:scale(1) rotate(0);opacity:1}}
+    @keyframes circleSpin{from{transform:rotate(-90deg) scale(.72);opacity:.25}to{transform:rotate(0) scale(1);opacity:1}}
+    @keyframes checkStroke{to{stroke-dashoffset:0}}
+    @keyframes checkHalo{0%{box-shadow:0 0 0 0 rgba(25,169,107,.28)}100%{box-shadow:0 0 0 16px rgba(25,169,107,0)}}
+    .public-free-courses{padding:48px 0 64px;background:#f8f9fb;border-top:1px solid var(--line)}
+    .public-free-courses .course-grid{margin-top:20px}
+    .public-course-cta{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:15px}
+    .public-course-cta .btn{padding:9px 12px;font-size:13px}
     /* Auth: quiet full-page layout with restrained motion */
     .auth-wrap{min-height:calc(100vh - 76px);display:grid;grid-template-columns:minmax(0,1fr) minmax(360px,.82fr);background:#fff;overflow:hidden}
     .auth-intro{display:flex;flex-direction:column;justify-content:center;padding:clamp(32px,7vw,100px);background:#f7f8fa;border-right:1px solid var(--line);animation:authEnter .55s ease both}
@@ -471,8 +486,8 @@ html[data-theme="dark"] .lesson-sidebar-tab.active{background:#1d2732}
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
   import {
     getFirestore, collection, doc, getDoc, getDocs, query, where,
-    setDoc, addDoc, updateDoc, serverTimestamp, limit
-  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-lite.js";
+    setDoc, addDoc, updateDoc, serverTimestamp, limit, onSnapshot
+  } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDD1_ssoVaIyIfwYAs7jT_g0pFdr1IlI",
@@ -503,8 +518,8 @@ html[data-theme="dark"] .lesson-sidebar-tab.active{background:#1d2732}
     cart: JSON.parse(localStorage.getItem("dopamineCart")||"[]")
   };
 
-  const publicRoutes = new Set(["home","login","register","about","contact"]);
-  const protectedRoutes = new Set(["dashboard","courses","course-details","cart","checkout","payment","lesson","homework","profile","settings","notifications","admin"]);
+  const publicRoutes = new Set(["home","login","register","about","contact","course-details","lesson","homework"]);
+  const protectedRoutes = new Set(["dashboard","courses","cart","checkout","payment","profile","settings","notifications","admin"]);
 
   function getSavedTheme(){return localStorage.getItem("dopamineTheme")==="dark"?"dark":"light";}
   function applyTheme(theme,rerender=true){
@@ -737,7 +752,22 @@ html[data-theme="dark"] .lesson-sidebar-tab.active{background:#1d2732}
           </div>
         </div>
       </section>
+      <section class="public-free-courses"><div class="container"><div class="eyebrow">Start learning</div><h2 style="font-size:32px;margin:7px 0">Free courses</h2><p class="muted">Explore available free courses before registering. Account access is enabled after teacher verification.</p><div id="public-free-course-list"><div class="loading"><div class="spinner"></div>Loading free courses...</div></div></div></section>
       <footer class="simple-footer"><div class="container"><span>© ${new Date().getFullYear()} DOPAMINE</span><span>Chemistry with Mr. Ahmed Dorar</span></div></footer>`;
+  }
+
+
+  async function loadPublicFreeCourses(){
+    const target=document.getElementById("public-free-course-list");if(!target)return;
+    try{
+      const snap=await getDocs(collection(db,"courses"));
+      const free=snap.docs.map(d=>({id:d.id,...d.data()})).filter(c=>courseAccessMode(c)==="free"&&c.published!==false);
+      if(!free.length){target.innerHTML='<div class="empty">No free courses are available right now.</div>';return}
+      target.innerHTML=`<div class="course-grid">${free.map(c=>{
+        const thumb=c.thumbnailBase64?imageFromBase64(c.thumbnailBase64):(c.thumbnailUrl||"");
+        return `<article class="course-card"><div class="course-thumb">${thumb?`<img src="${thumb}" alt="">`:'<span class="muted">DOPAMINE Chemistry</span>'}</div><div class="course-body"><div class="badge ok">FREE COURSE</div><h3 style="margin-top:10px">${escapeHTML(c.title||"Untitled Course")}</h3><p>${escapeHTML(c.description||"")}</p><div class="public-course-cta"><span class="muted">Open without an account</span><button class="btn btn-primary" onclick="navigate('course-details',{courseId:'${encodeURIComponent(c.id)}'})">Open free course</button></div></div></article>`;
+      }).join("")}</div>`;
+    }catch(e){console.error("Could not load public free courses",e);target.innerHTML='<div class="empty">Free courses could not be loaded.</div>'}
   }
 
   function loginView(message=""){
@@ -769,7 +799,7 @@ html[data-theme="dark"] .lesson-sidebar-tab.active{background:#1d2732}
           </section>
           <section class="auth-step" data-step="1" hidden><h3 class="auth-step-title">How can we reach you?</h3><p class="auth-step-hint">Add your email and phone number.</p>
             <div class="field"><label for="reg-email">Email</label><input id="reg-email" type="email" autocomplete="email" placeholder="you@example.com" required></div>
-            <div class="field"><label for="reg-phone">Phone</label><input id="reg-phone" type="tel" autocomplete="tel" placeholder="Your phone number" required></div>
+            <div class="field"><label for="reg-phone">Student phone number</label><input id="reg-phone" type="tel" autocomplete="tel" placeholder="Student phone number" required></div><div class="field"><label for="reg-parent-phone">Parent / guardian phone number</label><input id="reg-parent-phone" type="tel" autocomplete="tel" placeholder="Parent or guardian phone number" required></div>
             <div class="form-actions"><button class="btn btn-primary" type="button" onclick="registrationNext(1)">Continue <span class="mi">arrow_forward</span></button><button class="auth-back" type="button" onclick="registrationStep(0)">Back</button></div>
           </section>
           <section class="auth-step" data-step="2" hidden><h3 class="auth-step-title">Secure your account</h3><p class="auth-step-hint">Choose a password and confirm it.</p>
@@ -795,6 +825,90 @@ html[data-theme="dark"] .lesson-sidebar-tab.active{background:#1d2732}
     if(step===1){const email=document.getElementById('reg-email');if(email.value.trim()!==email.value.trim().toLowerCase())email.value=email.value.trim().toLowerCase()}
     registrationStep(step+1);
   };
+
+  let stopVerificationWatch = null;
+  function stopWatchingVerification(){
+    if(typeof stopVerificationWatch === "function") stopVerificationWatch();
+    stopVerificationWatch = null;
+  }
+
+  function verificationSuccessView(status="pending"){
+    const approved = status === "approved";
+    const rejected = status === "rejected";
+    return `<div class="verification-success"><section class="verification-card">
+      <div class="verification-check" aria-label="${approved?'Verified successfully':rejected?'Request rejected':'Request sent successfully'}"><svg viewBox="0 0 64 64" role="img" aria-hidden="true"><circle class="check-circle" cx="32" cy="32" r="27"></circle><path class="check-mark" d="M17 33.5 27 43 48 21"></path></svg></div>
+      <div class="eyebrow">${approved?'Account verified':rejected?'Request update':'Request submitted'}</div>
+      <h1 style="font-size:clamp(25px,4vw,34px);margin:10px 0 12px">${approved?'You are now verified':rejected?'Your request was not approved':'Your request was sent successfully'}</h1>
+      <p class="muted" style="line-height:1.8;margin:0 auto 22px;max-width:420px">${approved?'Your account is ready. You can now enter DOPAMINE.':rejected?'Please contact Mr. Ahmed Dorar for more information.':'WAITING HOST VERIFICATION'}</p>
+      ${approved?'<button class="btn btn-primary" id="enter-verified-account" style="margin-top:14px">Enter with account <span class="mi">arrow_forward</span></button>':`<p style="color:var(--muted);line-height:1.75">${rejected?'You can contact the teacher to ask about this decision.':'Your request is saved. This page will update automatically as soon as Mr. Ahmed Dorar reviews it.'}</p>`}
+    </section></div>`;
+  }
+
+  const REGISTRATION_PENDING_KEY="dopamineRegistrationPending";
+  function readLocalPendingRegistration(){try{return JSON.parse(localStorage.getItem(REGISTRATION_PENDING_KEY)||"null")}catch{return null}}
+  function hasLocalPendingRegistration(){return !!readLocalPendingRegistration()}
+  function rememberLocalPendingRegistration(email,phone,userId,status="pending"){
+    try{localStorage.setItem(REGISTRATION_PENDING_KEY,JSON.stringify({email,phone,userId:userId||null,savedAt:Date.now(),status}))}catch(e){console.warn("Could not save local pending registration",e)}
+  }
+
+  async function enterVerifiedAccount(){
+    const pending=readLocalPendingRegistration();
+    if(!pending){navigate("login");return}
+    const btn=document.getElementById("enter-verified-account");
+    if(btn){btn.disabled=true;btn.textContent="Opening your account..."}
+    try{
+      let userId=pending.userId;
+      let snap=null;
+      if(userId){snap=await getDoc(doc(db,"users",userId));}
+      if(!snap || !snap.exists()){
+        const q=query(collection(db,"users"),where("email","==",String(pending.email||"").toLowerCase()),limit(1));
+        const results=await getDocs(q); if(results.empty)throw new Error("missing");
+        snap=results.docs[0];userId=snap.id;
+      }
+      const user=snap.data();
+      if(user.verificationStatus!=="approved"){
+        if(btn){btn.disabled=false;btn.innerHTML='Enter with account <span class="mi">arrow_forward</span>'}
+        setView("register",verificationSuccessView(user.verificationStatus||"pending"));
+        return;
+      }
+      saveSession(userId);
+      state.user={id:userId,...user};
+      stopWatchingVerification();
+      localStorage.removeItem(REGISTRATION_PENDING_KEY);
+      navigate("dashboard");
+    }catch(error){
+      console.error("Could not enter verified account:",error);
+      showToast("Could not open your account. Please try again.");
+      if(btn){btn.disabled=false;btn.innerHTML='Enter with account <span class="mi">arrow_forward</span>'}
+    }
+  }
+  window.enterVerifiedAccount=enterVerifiedAccount;
+
+  function watchVerificationStatus(){
+    stopWatchingVerification();
+    const pending=readLocalPendingRegistration();
+    if(!pending)return;
+    const renderStatus=status=>{
+      const view=document.getElementById("view-register");
+      if(!view?.classList.contains("active"))return;
+      setView("register",verificationSuccessView(status));
+      if(status==="approved")document.getElementById("enter-verified-account")?.addEventListener("click",enterVerifiedAccount);
+    };
+    const listenToDoc=(userId)=>{
+      stopWatchingVerification();
+      stopVerificationWatch=onSnapshot(doc(db,"users",userId),(snap)=>{
+        if(!snap.exists())return;
+        const user=snap.data();
+        if(user.verificationStatus){
+          rememberLocalPendingRegistration(user.email||pending.email,user.phone||pending.phone,userId,user.verificationStatus);
+          renderStatus(user.verificationStatus);
+        }
+      },err=>console.error("Realtime verification listener failed:",err));
+    };
+    if(pending.userId){listenToDoc(pending.userId);return;}
+    const q=query(collection(db,"users"),where("email","==",String(pending.email||"").toLowerCase()),limit(1));
+    getDocs(q).then(results=>{if(!results.empty){const d=results.docs[0];rememberLocalPendingRegistration(d.data().email||pending.email,d.data().phone||pending.phone,d.id,d.data().verificationStatus||"pending");listenToDoc(d.id)}}).catch(err=>console.error("Could not find pending registration:",err));
+  }
 
   function aboutView(){
     return `<section class="public-section about-teacher-section" style="min-height:calc(100vh - 76px);padding-top:65px">
@@ -918,6 +1032,7 @@ html[data-theme="dark"] .lesson-sidebar-tab.active{background:#1d2732}
     if(snap.empty) throw new Error("invalid");
     const userDoc=snap.docs[0], user=userDoc.data();
     if(!["student","admin"].includes(user.role) || (user.role==="student" && user.accountPaused===true)) throw new Error("invalid");
+    if(user.role==="student" && user.verificationStatus && user.verificationStatus!=="approved") throw new Error("pending");
     const ok=await verifyPassword(password,user.passwordHash||"");
     if(!ok) throw new Error("invalid");
     saveSession(userDoc.id);
@@ -950,38 +1065,54 @@ html[data-theme="dark"] .lesson-sidebar-tab.active{background:#1d2732}
       navigate(destination.name,destination.params);
     }catch(error){
       console.error("[DOPAMINE] Login/Firestore error:",error);
-      setFormNotice("login-notice",error?.message==="invalid"?"Email or password is incorrect.":firebaseErrorText(error));
+      setFormNotice("login-notice",error?.message==="pending"?"Your account is waiting for teacher verification.":error?.message==="invalid"?"Email or password is incorrect.":firebaseErrorText(error));
     }finally{btn.disabled=false;btn.textContent="Login";}
   }
 
   async function handleRegister(e){
     e.preventDefault();
+    if(hasLocalPendingRegistration()){const saved=readLocalPendingRegistration();setView("register",verificationSuccessView(saved?.status||"pending"));document.getElementById("enter-verified-account")?.addEventListener("click",enterVerifiedAccount);watchVerificationStatus();return}
     const btn=e.currentTarget.querySelector("button[type=submit]");
     const name=document.getElementById("reg-name").value.trim();
     const email=document.getElementById("reg-email").value.trim().toLowerCase();
     const phone=document.getElementById("reg-phone").value.trim();
+    const parentPhone=document.getElementById("reg-parent-phone").value.trim();
     const password=document.getElementById("reg-password").value;
     const confirm=document.getElementById("reg-confirm").value;
+    if(!parentPhone){setFormNotice("register-notice","Please enter a parent or guardian phone number.");return}
     if(password!==confirm){setFormNotice("register-notice","Passwords do not match.");return}
     if(password.length<6){setFormNotice("register-notice","Password must be at least 6 characters.");return}
-    btn.disabled=true;btn.textContent="Creating account...";
+    btn.disabled=true;btn.textContent="Sending request...";
     try{
-      const q=query(collection(db,"users"),where("email","==",email),limit(1));
-      const existing=await getDocs(q);
-      if(!existing.empty){setFormNotice("register-notice","An account with this email already exists.");return}
+      const usersSnap=await getDocs(collection(db,"users"));
+      const digits=v=>String(v||"").replace(/\D/g,"");
+      const duplicate=usersSnap.docs.map(d=>({id:d.id,...d.data()})).find(u=>
+        String(u.email||"").toLowerCase()===email || (phone && digits(u.phone)===digits(phone))
+      );
+      if(duplicate){
+        if(duplicate.verificationStatus==="pending"){
+          rememberLocalPendingRegistration(duplicate.email||email,duplicate.phone||phone,duplicate.id,duplicate.verificationStatus||"pending");
+          setView("register",verificationSuccessView(duplicate.verificationStatus||"pending"));
+          watchVerificationStatus();
+        }else{
+          setFormNotice("register-notice","An account already exists with this email or student phone. Please log in instead.");
+        }
+        return;
+      }
       const userId=generateUserId();
       const passwordHash=await hashPassword(password);
       await setDoc(doc(db,"users",userId),{
-        fullName:name,email,phone,passwordHash,role:"student",profileImageBase64:"",
+        fullName:name,email,phone,parentPhone,passwordHash,role:"student",profileImageBase64:"",
+        verificationStatus:"pending",accountPaused:false,
         createdAt:serverTimestamp(),updatedAt:serverTimestamp()
       });
-      saveSession(userId);
-      state.user={id:userId,fullName:name,email,phone,role:"student",profileImageBase64:""};
-      navigate("dashboard");
+      rememberLocalPendingRegistration(email,phone,userId,"pending");
+      setView("register",verificationSuccessView("pending"));
+      watchVerificationStatus();
     }catch(error){
       console.error("[DOPAMINE] Registration/Firestore error:",error);
       setFormNotice("register-notice",firebaseErrorText(error));
-    }finally{btn.disabled=false;btn.textContent="Create Account";}
+    }finally{btn.disabled=false;btn.textContent="Create account";}
   }
 
   window.forgotPassword=()=>showToast("Please contact the platform administrator to reset your password.");
@@ -1075,6 +1206,7 @@ async function dashboardView(){
     setView("dashboard",`
       <div class="student-main"><div class="container">
         <div class="dashboard-hero"><div><div class="eyebrow">Your learning space</div><h1>Good to see you, ${escapeHTML(state.user.fullName||"Student")}.</h1><p>Pick a course, open a lesson, and keep moving.</p></div><button class="btn btn-primary" onclick="navigate('courses')"><span class="mi">play_circle</span> Browse courses</button></div>
+        ${state.user.instruction?`<section class="content-card" style="margin:0 0 24px;border-left:4px solid var(--orange)"><div class="eyebrow">A note from your teacher</div><h3 style="margin-top:8px">Your instruction</h3><p>${escapeHTML(state.user.instruction)}</p></section>`:""}
         <div class="dashboard-grid">
           <div class="stat"><div class="stat-icon"><span class="mi">menu_book</span></div><div class="label">Courses</div><div class="value">${courseData.length}</div></div>
           <div class="stat"><div class="stat-icon"><span class="mi">play_lesson</span></div><div class="label">Lessons</div><div class="value">${totalLessons}</div></div>
@@ -1617,12 +1749,13 @@ async function profileView(){
     if(publicRoutes.has(name)&&state.session&&(name==="login"||name==="register")){
       navigate("dashboard",{},true);return;
     }
-    if(name==="home"){setView("home",homeView());return}
+    if(name==="home"){setView("home",homeView());loadPublicFreeCourses();return}
     if(name==="login"){
       setView("login",loginView());
       document.getElementById("login-form")?.addEventListener("submit",handleLogin);return;
     }
     if(name==="register"){
+      if(hasLocalPendingRegistration()){const saved=readLocalPendingRegistration();setView("register",verificationSuccessView(saved?.status||"pending"));document.getElementById("enter-verified-account")?.addEventListener("click",enterVerifiedAccount);watchVerificationStatus();return;}
       setView("register",registerView());
       document.getElementById("register-form")?.addEventListener("submit",handleRegister);return;
     }
