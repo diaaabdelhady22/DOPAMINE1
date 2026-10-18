@@ -458,6 +458,29 @@
 html[data-theme="dark"] .lesson-part-row.active{background:#1d2732}html[data-theme="dark"] .lesson-part-num{background:#202c39;color:#f5f7fa}
 html[data-theme="dark"] .lesson-sidebar-tab.active{background:#1d2732}
 @media(max-width:700px){.lesson-sidebar-tabs,.lesson-sidebar-panel{grid-column:1/-1}}
+
+/* Logged-in bottom navigation */
+#site-header{position:sticky}
+#site-header .page-progress{position:absolute;left:0;right:0;bottom:-1px;height:2px;overflow:hidden;pointer-events:none;opacity:0;transition:opacity .15s;z-index:60}
+#site-header .page-progress::after{content:"";display:block;width:34%;height:100%;background:var(--orange);transform:translateX(-110%);box-shadow:0 0 8px rgba(244,123,32,.45)}
+#site-header.is-loading .page-progress{opacity:1}
+#site-header.is-loading .page-progress::after{animation:pageLoadingLine 1s ease-in-out infinite}
+@keyframes pageLoadingLine{0%{transform:translateX(-110%)}100%{transform:translateX(410%)}}
+.bottom-nav{display:none}
+@media(max-width:700px){
+  body.has-session{padding-bottom:calc(59px + env(safe-area-inset-bottom))}
+  body.has-session .bottom-nav{position:fixed;z-index:70;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;padding:4px 4px calc(4px + env(safe-area-inset-bottom));background:#fff;border:0;border-top:1px solid #e9edf2;border-radius:0;box-shadow:none}
+  .bottom-nav button{position:relative;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:5px 2px;border:0;border-radius:0;background:transparent;color:#8993a2;font-size:9px;font-weight:700;transition:color .18s}
+  .bottom-nav button .mi{font-size:19px}
+  .bottom-nav button.active{background:transparent;color:var(--orange-dark)}
+  .bottom-nav button.active::before{content:"";position:absolute;top:-4px;left:28%;right:28%;height:2px;border-radius:2px;background:var(--orange)}
+  .bottom-nav button:active{opacity:.7}
+  html[data-theme="dark"] body.has-session .bottom-nav{background:#0d141d;border-top-color:#263342}
+  html[data-theme="dark"] .bottom-nav button{color:#9aa8b8}
+  html[data-theme="dark"] .bottom-nav button.active{background:transparent;color:#ff9b52}
+  html[data-theme="dark"] .bottom-nav button.active::before{background:#ff9b52}
+}
+@media(min-width:701px){.bottom-nav{display:none!important}}
 </style>
 </head>
 <body>
@@ -465,7 +488,8 @@ html[data-theme="dark"] .lesson-sidebar-tab.active{background:#1d2732}
 
 
 <div class="app">
-  <header id="site-header" class="site-header"></header>
+  <header id="site-header" class="site-header"><div class="page-progress" aria-hidden="true"></div></header>
+  <nav id="bottom-nav" class="bottom-nav" aria-label="Main navigation"></nav>
 
   <main>
     <section id="view-home" class="page-view"></section>
@@ -620,6 +644,8 @@ html[data-theme="dark"] .lesson-sidebar-tab.active{background:#1d2732}
     const el = document.getElementById("view-" + id);
     if(el) el.innerHTML = html;
     window.scrollTo({top:0,behavior:"instant"});
+    const header=document.getElementById("site-header"); if(header) header.classList.remove("is-loading");
+    renderBottomNav();
   }
 
   function routeFromHash(){
@@ -632,6 +658,7 @@ html[data-theme="dark"] .lesson-sidebar-tab.active{background:#1d2732}
   }
 
   function navigate(name, params = {}, replace = false){
+    const header=document.getElementById("site-header"); if(header) header.classList.add("is-loading");
     let path = name;
     if(name === "course-details" && params.courseId) path = "course/" + encodeURIComponent(params.courseId);
     if(name === "lesson" && params.courseId && params.lessonId) path = "lesson/" + encodeURIComponent(params.courseId) + "/" + encodeURIComponent(params.lessonId);
@@ -695,7 +722,21 @@ html[data-theme="dark"] .lesson-sidebar-tab.active{background:#1d2732}
           <button class="install-app-button" onclick="installApp();closeMobileNav()"><span class="mi">download</span> Download DOPAMINE</button>
                             </div>`;
     }
+    if(!header.querySelector(".page-progress")) header.insertAdjacentHTML("beforeend",'<div class="page-progress" aria-hidden="true"></div>');
+    document.body.classList.toggle("has-session",!!state.session);
+    renderBottomNav();
     updateInstallButton();
+  }
+
+  function renderBottomNav(){
+    const nav=document.getElementById("bottom-nav");
+    if(!nav)return;
+    if(!state.session){nav.innerHTML="";return;}
+    const items=state.user?.role==="admin"
+      ? [{route:"admin",icon:"admin_panel_settings",label:"Admin"},{route:"dashboard",icon:"dashboard",label:"Home"},{route:"courses",icon:"menu_book",label:"Courses"},{route:"notifications",icon:"notifications",label:"Alerts"},{route:"profile",icon:"account_circle",label:"Profile"}]
+      : [{route:"dashboard",icon:"home",label:"Home"},{route:"courses",icon:"menu_book",label:"Courses"},{route:"settings",icon:"settings",label:"Settings"},{route:"notifications",icon:"notifications",label:"Alerts"},{route:"profile",icon:"account_circle",label:"Profile"}];
+    const current=routeFromHash().name;
+    nav.innerHTML=items.map(item=>`<button type="button" class="${current===item.route||(item.route==="courses"&&current==="course-details")?"active":""}" aria-label="${item.label}" onclick="navigate('${item.route}')"><span class="mi">${item.icon}</span><span>${item.label}</span></button>`).join("");
   }
 
   window.toggleMobileNav = () => {
@@ -1754,7 +1795,9 @@ async function profileView(){
   };
 
   async function renderRoute(){
+    const progressHeader=document.getElementById("site-header"); if(progressHeader) progressHeader.classList.add("is-loading");
     renderHeader();
+    renderBottomNav();
     const route=routeFromHash();
     let name=route.name,params=route.params;
     if(!publicRoutes.has(name)&&!protectedRoutes.has(name)) {navigate("home",{},true);return}
