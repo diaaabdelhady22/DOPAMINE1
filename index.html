@@ -376,6 +376,9 @@
     .toast.show{display:block}
 
 
+    /* Keep install actions hidden even where navigation buttons define display:flex. */
+    .install-app-button[hidden]{display:none!important}
+
     .mi{font-family:"Material Symbols Outlined";font-weight:400;font-style:normal;font-size:20px;line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;white-space:nowrap;word-wrap:normal;direction:ltr;-webkit-font-feature-settings:"liga";-webkit-font-smoothing:antialiased;font-feature-settings:"liga";vertical-align:middle}
     .btn .mi,.nav .mi,.mobile-menu .mi{font-size:19px}
     .stat{position:relative;overflow:hidden}.stat .stat-icon{width:42px;height:42px;border-radius:12px;background:#fff3ea;color:var(--orange);display:grid;place-items:center;margin-bottom:13px}.stat .stat-icon .mi{font-size:22px}
@@ -546,14 +549,39 @@ html[data-theme="dark"] .lesson-sidebar-tab.active{background:#1d2732}
   }
 
   let deferredInstallPrompt = null;
-  function updateInstallButton(){
-    const isInstalled = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
-    document.querySelectorAll(".install-app-button").forEach(button => { button.hidden = isInstalled; });
+
+  // Detect the common installed-PWA display modes (including iOS Home Screen apps).
+  function isRunningAsInstalledApp(){
+    return window.matchMedia("(display-mode: standalone)").matches ||
+           window.matchMedia("(display-mode: fullscreen)").matches ||
+           window.matchMedia("(display-mode: minimal-ui)").matches ||
+           window.navigator.standalone === true;
   }
+
+  function updateInstallButton(){
+    const installed = isRunningAsInstalledApp();
+    document.querySelectorAll(".install-app-button").forEach(button => {
+      button.hidden = installed;
+      button.setAttribute("aria-hidden", installed ? "true" : "false");
+    });
+  }
+
+  // Run now and whenever the app returns to the foreground or display mode changes.
+  updateInstallButton();
+  window.addEventListener("pageshow", updateInstallButton);
+  document.addEventListener("visibilitychange", () => {
+    if(!document.hidden) updateInstallButton();
+  });
+  ["standalone", "fullscreen", "minimal-ui"].forEach(mode => {
+    const query = window.matchMedia(`(display-mode: ${mode})`);
+    if(query.addEventListener) query.addEventListener("change", updateInstallButton);
+    else if(query.addListener) query.addListener(updateInstallButton);
+  });
 
   window.addEventListener("beforeinstallprompt", event => {
     event.preventDefault();
     deferredInstallPrompt = event;
+    updateInstallButton();
   });
   window.addEventListener("appinstalled", () => {
     deferredInstallPrompt = null;
