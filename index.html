@@ -462,85 +462,7 @@ html[data-theme="dark"] .lesson-sidebar-tab.active{background:#1d2732}
 </head>
 <body>
 
-<div id="offline-screen" role="status" aria-live="polite" hidden>
-  <div class="offline-card">
-    <div class="offline-mark" aria-hidden="true">
-      <svg viewBox="0 0 96 96" fill="none">
-        <circle cx="48" cy="48" r="43" stroke="currentColor" stroke-opacity=".12" stroke-width="2"/>
-        <path d="M19 35C35 21 61 21 77 35" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
-        <path d="M29 46C40 37 56 37 67 46" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
-        <path d="M39 57C44 53 52 53 57 57" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
-        <circle cx="48" cy="67" r="3.5" fill="currentColor"/>
-        <path d="M20 18L76 78" stroke="#F47B20" stroke-width="5" stroke-linecap="round"/>
-      </svg>
-    </div>
-    <span class="offline-kicker"><span class="offline-dot"></span> CONNECTION LOST</span>
-    <h1>You’re offline</h1>
-    <p class="offline-description">Looks like your internet connection took a break. Check your connection and try again.</p>
-    <button id="offline-retry" type="button">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.5 9A7 7 0 0 1 18 6l2 6M4 12l2 6a7 7 0 0 0 12.5-3"/></svg>
-      Try again
-    </button>
-    <div class="offline-foot"><span class="offline-foot-line"></span>DOPAMINE <span class="offline-foot-line"></span></div>
-  </div>
-</div>
-<style>
-  #offline-screen[hidden]{display:none!important}
-  #offline-screen{position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;overflow:auto;padding:24px;background:#f8f9fb;color:#132238;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-  #offline-screen:before{content:"";position:fixed;width:440px;height:440px;right:-170px;top:-200px;border-radius:50%;background:rgba(244,123,32,.07);pointer-events:none}
-  #offline-screen:after{content:"";position:fixed;width:330px;height:330px;left:-150px;bottom:-170px;border-radius:50%;background:rgba(19,34,56,.045);pointer-events:none}
-  .offline-card{position:relative;z-index:1;width:min(100%,440px);text-align:center;padding:42px 34px 28px;background:#fff;border:1px solid #e7ebf0;border-radius:24px;box-shadow:0 22px 70px rgba(20,38,61,.08);animation:offlineEnter .38s ease both}
-  .offline-mark{width:112px;height:112px;margin:0 auto 25px;display:grid;place-items:center;border-radius:30px;background:#fff4eb;color:#132238}
-  .offline-mark svg{width:78px;height:78px}
-  .offline-kicker{display:inline-flex;align-items:center;gap:8px;color:#d9630c;font-size:10px;font-weight:800;letter-spacing:.16em}
-  .offline-dot{width:7px;height:7px;border-radius:50%;background:#f47b20;box-shadow:0 0 0 4px rgba(244,123,32,.12)}
-  .offline-card h1{margin:13px 0 10px;font-size:clamp(30px,7vw,38px);letter-spacing:-.045em;line-height:1.1;color:#132238}
-  .offline-description{max-width:310px;margin:0 auto;color:#687588;font-size:14px;line-height:1.8}
-  #offline-retry{width:100%;margin-top:27px;min-height:48px;display:flex;align-items:center;justify-content:center;gap:9px;border:0;border-radius:11px;background:#f47b20;color:#fff;font-size:14px;font-weight:750;cursor:pointer;transition:background .18s,transform .18s}
-  #offline-retry:hover{background:#d9630c;transform:translateY(-1px)}
-  #offline-retry:focus-visible{outline:3px solid rgba(244,123,32,.35);outline-offset:3px}
-  #offline-retry svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-  .offline-foot{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:27px;color:#9aa4b1;font-size:10px;font-weight:800;letter-spacing:.2em}
-  .offline-foot-line{height:1px;width:28px;background:#e7ebf0}
-  @keyframes offlineEnter{from{opacity:0;transform:translateY(8px) scale(.99)}to{opacity:1;transform:translateY(0) scale(1)}}
-  @media(max-width:480px){#offline-screen{padding:18px}.offline-card{padding:34px 23px 24px;border-radius:20px}.offline-mark{width:96px;height:96px;margin-bottom:22px}.offline-mark svg{width:68px;height:68px}}
-  @media(prefers-reduced-motion:reduce){.offline-card{animation:none}#offline-retry{transition:none}}
-  html[data-theme="dark"] #offline-screen{background:#0b1118;color:#f5f7fa}
-  html[data-theme="dark"] .offline-card{background:#111923;border-color:#263342;box-shadow:0 22px 70px rgba(0,0,0,.3)}
-  html[data-theme="dark"] .offline-card h1{color:#f5f7fa}
-  html[data-theme="dark"] .offline-description{color:#93a1b2}
-  html[data-theme="dark"] .offline-mark{background:#2a211a;color:#f5f7fa}
-  html[data-theme="dark"] .offline-foot-line{background:#263342}
-</style>
-<script>
-(function(){
-  const screen = document.getElementById('offline-screen');
-  const retry = document.getElementById('offline-retry');
-  if (!screen || !retry) return;
-  function updateOfflineScreen(){
-    const offline = !navigator.onLine;
-    screen.hidden = !offline;
-    document.documentElement.style.overflow = offline ? 'hidden' : '';
-  }
-  retry.addEventListener('click', function(){
-    retry.disabled = true;
-    retry.style.opacity = '.75';
-    retry.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg> Checking connection…';
-    if (navigator.onLine) {
-      window.location.reload();
-      return;
-    }
-    setTimeout(function(){
-      retry.disabled = false;
-      retry.style.opacity = '';
-      retry.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.5 9A7 7 0 0 1 18 6l2 6M4 12l2 6a7 7 0 0 0 12.5-3"/></svg> Try again';
-    }, 650);
-  });
-  window.addEventListener('online', updateOfflineScreen);
-  window.addEventListener('offline', updateOfflineScreen);
-  updateOfflineScreen();
-})();
-</script>
+
 
 <div class="app">
   <header id="site-header" class="site-header"></header>
@@ -1902,5 +1824,17 @@ async function profileView(){
     }
   })();
 </script>
+
+<script>
+/* Register the service worker that caches offline.html and provides an offline fallback. */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('./sw.js').catch(function (error) {
+      console.warn('DOPAMINE offline support could not be registered:', error);
+    });
+  });
+}
+</script>
+
 </body>
 </html>

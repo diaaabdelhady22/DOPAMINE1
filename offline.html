@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f8f9fb">
+  <title>You’re offline | DOPAMINE</title>
+  <style>
+    :root{color-scheme:light;--ink:#132238;--muted:#687588;--orange:#f47b20;--line:#e7ebf0}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;display:grid;place-items:center;overflow:auto;padding:24px;background:#f8f9fb;color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    body:before,body:after{content:"";position:fixed;border-radius:50%;pointer-events:none}
+    body:before{width:440px;height:440px;right:-170px;top:-200px;background:rgba(244,123,32,.07)}
+    body:after{width:330px;height:330px;left:-150px;bottom:-170px;background:rgba(19,34,56,.045)}
+    .card{position:relative;z-index:1;width:min(100%,440px);text-align:center;padding:42px 34px 28px;background:#fff;border:1px solid var(--line);border-radius:24px;box-shadow:0 22px 70px rgba(20,38,61,.08);animation:enter .38s ease both}
+    .mark{width:112px;height:112px;margin:0 auto 25px;display:grid;place-items:center;border-radius:30px;background:#fff4eb;color:var(--ink)}
+    .mark svg{width:78px;height:78px}
+    .kicker{display:inline-flex;align-items:center;gap:8px;color:#d9630c;font-size:10px;font-weight:800;letter-spacing:.16em}
+    .dot{width:7px;height:7px;border-radius:50%;background:var(--orange);box-shadow:0 0 0 4px rgba(244,123,32,.12)}
+    h1{margin:13px 0 10px;font-size:clamp(30px,7vw,38px);letter-spacing:-.045em;line-height:1.1}
+    p{max-width:310px;margin:0 auto;color:var(--muted);font-size:14px;line-height:1.8}
+    button{width:100%;margin-top:27px;min-height:48px;display:flex;align-items:center;justify-content:center;gap:9px;border:0;border-radius:11px;background:var(--orange);color:#fff;font-size:14px;font-weight:750;cursor:pointer;transition:background .18s,transform .18s}
+    button:hover{background:#d9630c;transform:translateY(-1px)}
+    button:focus-visible{outline:3px solid rgba(244,123,32,.35);outline-offset:3px}
+    button svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+    .foot{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:27px;color:#9aa4b1;font-size:10px;font-weight:800;letter-spacing:.2em}
+    .rule{height:1px;width:28px;background:var(--line)}
+    @keyframes enter{from{opacity:0;transform:translateY(8px) scale(.99)}to{opacity:1;transform:translateY(0) scale(1)}}
+    @media(max-width:480px){body{padding:18px}.card{padding:34px 23px 24px;border-radius:20px}.mark{width:96px;height:96px;margin-bottom:22px}.mark svg{width:68px;height:68px}}
+    @media(prefers-reduced-motion:reduce){.card{animation:none}button{transition:none}}
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="mark" aria-hidden="true">
+      <svg viewBox="0 0 96 96" fill="none">
+        <circle cx="48" cy="48" r="43" stroke="currentColor" stroke-opacity=".12" stroke-width="2"/>
+        <path d="M19 35C35 21 61 21 77 35" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+        <path d="M29 46C40 37 56 37 67 46" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+        <path d="M39 57C44 53 52 53 57 57" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+        <circle cx="48" cy="67" r="3.5" fill="currentColor"/>
+        <path d="M20 18L76 78" stroke="#F47B20" stroke-width="5" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <span class="kicker"><span class="dot"></span> CONNECTION LOST</span>
+    <h1>You’re offline</h1>
+    <p>Looks like your internet connection took a break. Check your connection and try again.</p>
+    <button id="retry" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.5 9A7 7 0 0 1 18 6l2 6M4 12l2 6a7 7 0 0 0 12.5-3"/></svg>
+      Try again
+    </button>
+    <div class="foot"><span class="rule"></span>DOPAMINE<span class="rule"></span></div>
+  </main>
+  <script>
+    document.getElementById('retry').addEventListener('click', function () {
+      if (navigator.onLine) {
+        window.location.href = './index.html';
+      } else {
+        this.innerHTML = 'Still offline — check your connection';
+        window.setTimeout(() => {
+          this.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.5 9A7 7 0 0 1 18 6l2 6M4 12l2 6a7 7 0 0 0 12.5-3"/></svg> Try again';
+        }, 1600);
+      }
+    });
+    window.addEventListener('online', function () { window.location.href = './index.html'; });
+  </script>
+</body>
+</html>
