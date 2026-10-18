@@ -381,7 +381,7 @@
 
     .mi{font-family:"Material Symbols Outlined";font-weight:400;font-style:normal;font-size:20px;line-height:1;letter-spacing:normal;text-transform:none;display:inline-block;white-space:nowrap;word-wrap:normal;direction:ltr;-webkit-font-feature-settings:"liga";-webkit-font-smoothing:antialiased;font-feature-settings:"liga";vertical-align:middle}
     .btn .mi,.nav .mi,.mobile-menu .mi{font-size:19px}
-    .stat{position:relative;overflow:hidden}.stat .stat-icon{width:42px;height:42px;border-radius:12px;background:#fff3ea;color:var(--orange);display:grid;place-items:center;margin-bottom:13px}.stat .stat-icon .mi{font-size:22px}
+    .stat{position:relative;overflow:hidden;isolation:isolate}.stat-corner-image{position:absolute;right:12px;bottom:10px;width:76px;height:76px;object-fit:contain;object-position:right bottom;z-index:0;pointer-events:none}.stat .stat-icon,.stat .label,.stat .value{position:relative;z-index:1}.stat .stat-icon{width:42px;height:42px;border-radius:12px;background:#fff3ea;color:var(--orange);display:grid;place-items:center;margin-bottom:13px}.stat .stat-icon .mi{font-size:22px}
     .dashboard-hero{background:linear-gradient(135deg,#132238,#1d304a);color:#fff;border-radius:18px;padding:30px;display:flex;justify-content:space-between;gap:24px;align-items:center;margin-bottom:22px;box-shadow:0 18px 45px rgba(19,34,56,.15)}
     .dashboard-hero h1{margin:7px 0 9px;font-size:34px;letter-spacing:-.04em}.dashboard-hero p{margin:0;color:#c8d3df}.dashboard-hero .eyebrow{color:#ffb37d}
     .dashboard-quick{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.quick-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:17px;display:flex;align-items:center;gap:12px}.quick-card .mi{color:var(--orange)}
@@ -420,7 +420,7 @@
       .hero{min-height:calc(100vh - 66px);align-items:flex-start}.hero-copy{padding:22px 0 70px}.hero h1{font-size:48px;margin:7px 0 18px}
       .hero p{font-size:16px}.container{width:calc(100% - 26px)}
       .student-main{padding-top:25px}.welcome{align-items:flex-start;flex-direction:column}.welcome h1{font-size:28px}
-      .dashboard-grid{grid-template-columns:1fr 1fr;gap:10px}.stat{padding:15px}.stat .value{font-size:24px}
+      .dashboard-grid{grid-template-columns:1fr 1fr;gap:10px}.stat{padding:15px;min-height:142px}.stat .value{font-size:24px}.stat-corner-image{width:58px;height:58px;right:8px;bottom:7px}
       .course-grid{grid-template-columns:1fr}.course-thumb{height:175px}
       .auth-card{padding:24px}.detail-copy h1{font-size:29px}
       .detail-thumb{height:200px}.lesson-row{padding:12px}.lesson-row .btn{padding:9px 11px}
@@ -1239,10 +1239,10 @@ async function dashboardView(){
         <div class="dashboard-hero"><div><div class="eyebrow">Your learning space</div><h1>Good to see you, ${escapeHTML(state.user.fullName||"Student")}.</h1><p>Pick a course, open a lesson, and keep moving.</p></div><button class="btn btn-primary" onclick="navigate('courses')"><span class="mi">play_circle</span> Browse courses</button></div>
         ${state.user.instruction?`<section class="content-card" style="margin:0 0 24px;border-left:4px solid var(--orange)"><div class="eyebrow">A note from your teacher</div><h3 style="margin-top:8px">Your instruction</h3><p>${escapeHTML(state.user.instruction)}</p></section>`:""}
         <div class="dashboard-grid">
-          <div class="stat"><div class="stat-icon"><span class="mi">menu_book</span></div><div class="label">Courses</div><div class="value">${courseData.length}</div></div>
-          <div class="stat"><div class="stat-icon"><span class="mi">play_lesson</span></div><div class="label">Lessons</div><div class="value">${totalLessons}</div></div>
-          <div class="stat"><div class="stat-icon"><span class="mi">school</span></div><div class="label">Learning</div><div class="value">Active</div></div>
-          <div class="stat"><div class="stat-icon"><span class="mi">person</span></div><div class="label">Account</div><div class="value">Student</div></div>
+          <div class="stat"><div class="stat-icon"><span class="mi">menu_book</span></div><div class="label">Courses</div><div class="value">${courseData.length}</div><img class="stat-corner-image" src="1.png" alt="" aria-hidden="true"></div>
+          <div class="stat"><div class="stat-icon"><span class="mi">play_lesson</span></div><div class="label">Lessons</div><div class="value">${totalLessons}</div><img class="stat-corner-image" src="2.png" alt="" aria-hidden="true"></div>
+          <div class="stat"><div class="stat-icon"><span class="mi">school</span></div><div class="label">Learning</div><div class="value">Active</div><img class="stat-corner-image" src="3.png" alt="" aria-hidden="true"></div>
+          <div class="stat"><div class="stat-icon"><span class="mi">person</span></div><div class="label">Account</div><div class="value">Student</div><img class="stat-corner-image" src="4.png" alt="" aria-hidden="true"></div>
         </div>
         <div class="dashboard-quick"><button class="quick-card" onclick="navigate('courses')"><span class="mi">library_books</span><strong>My courses</strong></button><button class="quick-card" onclick="navigate('profile')"><span class="mi">manage_accounts</span><strong>My profile</strong></button><button class="quick-card" onclick="openTeacherAbout()"><span class="mi">person</span><strong>About teacher</strong></button></div>
         <div class="section-head"><h2>Courses</h2><button class="text-btn" onclick="navigate('courses')">See all <span class="mi" style="font-size:16px">arrow_forward</span></button></div>
