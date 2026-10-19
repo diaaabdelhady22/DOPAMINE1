@@ -481,9 +481,44 @@ html[data-theme="dark"] .lesson-sidebar-tab.active{background:#1d2732}
   html[data-theme="dark"] .bottom-nav button.active::before{background:#ff9b52}
 }
 @media(min-width:701px){.bottom-nav{display:none!important}}
+
+
+/* Fekra Code — prominent studio credit */
+.website-about{padding:88px 24px 96px;background:var(--bg,#f7f8fa);border-top:1px solid var(--line,#e5e7eb);color:var(--text,#172033)}
+.website-about-inner{width:min(100%,1300px);min-height:430px;margin:0 auto;padding:58px clamp(24px,6vw,76px);display:grid;grid-template-columns:minmax(0,1fr) minmax(280px,.9fr);align-items:center;column-gap:clamp(32px,6vw,90px);row-gap:24px;background:var(--surface,#fff);border:1px solid var(--line,#e5e7eb);border-radius:10px}
+.website-about-copy{min-width:0}
+.website-about .eyebrow{margin:0 0 18px;color:var(--orange,#e87525);font-size:12px;font-weight:800;letter-spacing:.15em;text-transform:uppercase}
+.website-about h2{margin:0 0 20px;color:var(--text,#172033);font-size:clamp(32px,4vw,48px);line-height:1.12;letter-spacing:-.04em}
+.website-about p{max-width:500px;margin:0;color:var(--muted,#687386);font-size:16px;line-height:1.85}
+.website-about .founder-name{display:block;margin-top:18px;color:var(--text,#172033);font-size:clamp(20px,2.3vw,26px);font-weight:800;letter-spacing:-.02em}
+.website-about .founder-role{display:block;margin-top:4px;color:var(--muted,#687386);font-size:13px;font-weight:600}
+.fekra-logos{display:flex;align-items:center;justify-content:center;width:100%;min-height:190px;margin:0;padding:24px;box-sizing:border-box;border-left:1px solid var(--line,#e5e7eb)}
+.fekra-logo-main{display:block;width:min(100%,390px);max-height:180px;object-fit:contain}
+.fekra-logo-mark{display:none}
+.fekra-visit{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:50px;margin-top:28px;padding:0 23px;border:1px solid var(--orange,#e87525);border-radius:10px;background:var(--orange,#e87525);color:#fff!important;text-decoration:none!important;font-size:14px;font-weight:800;transition:transform .18s ease,background .18s ease}
+.fekra-visit:hover{transform:translateY(-2px);background:var(--orange-dark,#cc5d12)}
+.fekra-visit .mi{font-size:18px;line-height:1}
+html[data-theme="dark"] .website-about{background:var(--bg,#0d141d);border-top-color:var(--line,#263342)}
+html[data-theme="dark"] .website-about-inner{background:var(--surface,#101820);border-color:var(--line,#263342)}
+html[data-theme="dark"] .website-about h2,html[data-theme="dark"] .website-about .founder-name{color:var(--text,#f5f7fa)}
+html[data-theme="dark"] .website-about p,html[data-theme="dark"] .website-about .founder-role{color:var(--muted,#aab5c3)}
+html[data-theme="dark"] .fekra-logo-main{filter:brightness(0) invert(1)}
+@media(max-width:760px){.website-about{padding:48px 16px 56px}.website-about-inner{grid-template-columns:1fr;min-height:0;padding:36px 24px;row-gap:20px;text-align:center;border-radius:18px}.website-about .eyebrow{margin-bottom:14px}.website-about h2{font-size:clamp(30px,8vw,40px)}.website-about p{margin-inline:auto;font-size:15px}.website-about .founder-name{font-size:23px}.fekra-logos{min-height:0;padding:25px 0 8px;border-left:0;border-top:1px solid var(--line,#e5e7eb)}.fekra-logo-main{width:min(100%,360px);max-height:150px}.fekra-visit{margin-top:23px;width:100%;max-width:300px;box-sizing:border-box}}
+
 </style>
 </head>
 <body>
+<script>
+
+
+  /* Disable the browser context menu across the entire site. */
+  document.addEventListener("contextmenu", function (event) {
+    event.preventDefault();
+    event.stopPropagation();
+    return false;
+  }, true);
+</script>
+
 
 
 
@@ -679,7 +714,7 @@ html[data-theme="dark"] .lesson-sidebar-tab.active{background:#1d2732}
             <img src="logo.png" alt="DOPAMINE">
           </button>
           <nav class="nav">
-            <button onclick="openTeacherAbout()"><span class="mi">person</span> About Teacher</button>
+            <button onclick="openTeacherAbout()"><span class="mi">person</span> About</button>
             <button onclick="navigate('contact')"><span class="mi">mail</span> Contact</button>
             <button onclick="navigate('login')"><span class="mi">login</span> Login</button>
             <button class="install-app-button" onclick="installApp()"><span class="mi">download</span> Download App</button>
@@ -689,7 +724,7 @@ html[data-theme="dark"] .lesson-sidebar-tab.active{background:#1d2732}
         </div>
         <div id="mobile-nav" class="mobile-nav">
           <button onclick="navigate('home');closeMobileNav()"><span class="mi">home</span> Home</button>
-          <button onclick="openTeacherAbout();closeMobileNav()"><span class="mi">person</span> About Teacher</button>
+          <button onclick="openTeacherAbout();closeMobileNav()"><span class="mi">person</span> About</button>
           <button onclick="navigate('contact');closeMobileNav()"><span class="mi">mail</span> Contact</button>
           <button onclick="navigate('login');closeMobileNav()"><span class="mi">login</span> Login</button>
           <button class="install-app-button" onclick="installApp();closeMobileNav()"><span class="mi">download</span> Download DOPAMINE</button>
@@ -811,7 +846,7 @@ html[data-theme="dark"] .lesson-sidebar-tab.active{background:#1d2732}
               DOPAMINE is a chemistry learning platform built around clear explanations, experiments,
               and steady progress that happen after you sign in.
             </p>
-            <button class="btn btn-secondary" onclick="openTeacherAbout()">About the teacher</button>
+            <button class="btn btn-secondary" onclick="openTeacherAbout()">About</button>
           </div>
           <div class="teacher-card">
             <div class="eyebrow">DOPAMINE Chemistry</div>
@@ -985,7 +1020,7 @@ html[data-theme="dark"] .lesson-sidebar-tab.active{background:#1d2732}
   function aboutView(){
     return `<section class="public-section about-teacher-section" style="min-height:calc(100vh - 76px);padding-top:65px">
       <div class="container">
-        <div class="eyebrow">About the teacher</div>
+        <div class="eyebrow">About Teacher</div>
         <h1 style="font-size:44px;letter-spacing:-.04em;margin:8px 0 0">Mr. Ahmed Dorar</h1>
         <div class="teacher-about">
           <div class="teacher-photo-wrap" aria-label="Mr. Ahmed Dorar">
@@ -1007,6 +1042,24 @@ html[data-theme="dark"] .lesson-sidebar-tab.active{background:#1d2732}
               <div class="teacher-point"><span class="mi">trending_up</span><span>Step-by-step progress</span></div>
             </div>
           </div>
+        </div>
+      </div>
+    </section>
+    <section class="website-about">
+      <div class="website-about-inner">
+        <div class="website-about-copy">
+          <div class="eyebrow">About the website</div>
+          <h2>Designed and developed by Fekra Code.</h2>
+          <p>Thoughtfully built to deliver a clear, reliable learning experience.</p>
+          <span class="founder-name">Diaa Abdelhady Abdelzien</span>
+          <span class="founder-role">Founder of Fekra Code</span>
+          <a class="fekra-visit" href="https://fekracode.site.je" target="_blank" rel="noopener noreferrer">
+            Visit the official website <span class="mi">arrow_outward</span>
+          </a>
+        </div>
+        <div class="fekra-logos" aria-label="Fekra Code">
+          <img class="fekra-logo-main" src="log.png" alt="Fekra Code — full logo">
+          <img class="fekra-logo-mark" src="log2.png" alt="Fekra Code icon">
         </div>
       </div>
     </section>`;
