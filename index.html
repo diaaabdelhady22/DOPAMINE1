@@ -225,7 +225,10 @@
     .video-player{position:relative;background:#10151c;border-radius:14px;overflow:hidden;width:100%;aspect-ratio:16/9;box-shadow:0 15px 40px rgba(20,30,45,.14);-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
     .video-frame{position:absolute;inset:0}
     .video-frame iframe{width:100%;height:100%;border:0;display:block}
-    .video-protect{position:absolute;inset:0;z-index:2;background:transparent;pointer-events:none}
+    .video-protect{position:absolute;inset:0;z-index:2;background:transparent;pointer-events:none;-webkit-tap-highlight-color:transparent;tap-highlight-color:transparent;touch-action:manipulation;user-select:none;-webkit-user-select:none;outline:none}
+    .video-player,.video-player *{-webkit-tap-highlight-color:transparent}
+    .video-player button,.video-player [role="button"],.video-protect{outline:none}
+    .video-player button:focus:not(:focus-visible){outline:none;box-shadow:none}
     .custom-video-controls{position:absolute;left:0;right:0;bottom:0;z-index:4;padding:35px 14px 12px;background:linear-gradient(transparent,rgba(8,13,19,.88));-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;transition:opacity .22s ease,transform .22s ease}
     .custom-video-controls button{border:0;background:#1a222c;color:#fff;padding:8px;min-width:38px;border:1px solid #2a3542;border-radius:7px;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;transition:background .18s ease,transform .18s ease}
     .custom-video-controls button:hover{background:#25313f}
@@ -250,7 +253,10 @@
     .video-player{position:relative;background:#10151c;border-radius:14px;overflow:hidden;width:100%;aspect-ratio:16/9;box-shadow:0 15px 40px rgba(20,30,45,.14);-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
     .video-frame{position:absolute;inset:0}
     .video-frame iframe{width:100%;height:100%;border:0;display:block}
-    .video-protect{position:absolute;inset:0;z-index:2;background:transparent;pointer-events:none}
+    .video-protect{position:absolute;inset:0;z-index:2;background:transparent;pointer-events:none;-webkit-tap-highlight-color:transparent;tap-highlight-color:transparent;touch-action:manipulation;user-select:none;-webkit-user-select:none;outline:none}
+    .video-player,.video-player *{-webkit-tap-highlight-color:transparent}
+    .video-player button,.video-player [role="button"],.video-protect{outline:none}
+    .video-player button:focus:not(:focus-visible){outline:none;box-shadow:none}
     .custom-video-controls{position:absolute;left:0;right:0;bottom:0;z-index:4;padding:35px 14px 12px;background:linear-gradient(transparent,rgba(8,13,19,.88));-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;transition:opacity .22s ease,transform .22s ease}
     .custom-video-controls button{border:0;background:#1a222c;color:#fff;padding:8px;min-width:38px;border:1px solid #2a3542;border-radius:7px;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;transition:background .18s ease,transform .18s ease}
     .custom-video-controls button:hover{background:#25313f}
@@ -508,6 +514,17 @@ html[data-theme="dark"] .fekra-logo-main{filter:brightness(0) invert(1)}
 </style>
 </head>
 <body>
+<script>
+
+
+  /* Disable the browser context menu across the entire site. */
+  document.addEventListener("contextmenu", function (event) {
+    event.preventDefault();
+    event.stopPropagation();
+    return false;
+  }, true);
+</script>
+
 
 
 
@@ -1685,16 +1702,63 @@ async function lessonView(courseId,lessonId,kind='lessons'){
     bindTimeline();
 
     let clickTimer=null;
+    let lastTapAt=0;
     const clickTarget=protect||wrap;
     clickTarget.style.pointerEvents="auto";
     clickTarget.style.cursor="pointer";
-    clickTarget.onclick=e=>{
-      if(e.target.closest(".custom-video-controls"))return;
+    clickTarget.style.webkitTapHighlightColor="transparent";
+
+    // Desktop: click toggles playback; a double-click seeks 10 seconds.
+    // Touch: double-tap either side seeks without leaving the blue tap flash.
+    clickTarget.addEventListener("pointerup",e=>{
+      if(e.target.closest(".custom-video-controls") || e.target.closest(".player-settings-panel"))return;
+      if(e.pointerType==="mouse") return; // mouse click handler below handles desktop
+      e.preventDefault();
       showPlayerControls();
-      if(clickTimer){clearTimeout(clickTimer);clickTimer=null;seekVideo(e.clientX < wrap.getBoundingClientRect().left+wrap.getBoundingClientRect().width/2 ? -10 : 10);return}
+      const now=Date.now(), rect=wrap.getBoundingClientRect();
+      if(now-lastTapAt<300){
+        clearTimeout(clickTimer);clickTimer=null;
+        const x=e.clientX-rect.left;
+        seekVideo(x<rect.width/2?-10:10);
+        lastTapAt=0;
+      }else{
+        lastTapAt=now;
+        clickTimer=setTimeout(()=>{clickTimer=null;videoPlayPause()},300);
+      }
+    },{passive:false});
+
+    clickTarget.addEventListener("click",e=>{
+      if(e.target.closest(".custom-video-controls") || e.target.closest(".player-settings-panel"))return;
+      if(e.detail>0 && window.matchMedia("(pointer: coarse)").matches)return;
+      showPlayerControls();
+      if(clickTimer){clearTimeout(clickTimer);clickTimer=null;const rect=wrap.getBoundingClientRect();seekVideo(e.clientX<rect.left+rect.width/2?-10:10);return}
       clickTimer=setTimeout(()=>{clickTimer=null;videoPlayPause()},260);
-    };
+    });
     center?.addEventListener("click",videoPlayPause);
+
+    // Keyboard controls while the lesson player is open.
+    if(!window.__dopaminePlayerKeysBound){
+      window.__dopaminePlayerKeysBound=true;
+      document.addEventListener("keydown",e=>{
+        const player=document.getElementById("video-player");
+        if(!player || !state.currentPlayer || !state.playerReady)return;
+        if(e.altKey||e.ctrlKey||e.metaKey)return;
+        const target=e.target;
+        if(target && (target.matches("input,textarea,select,[contenteditable='true']") || target.closest(".custom-video-controls"))) {
+          if(target.closest(".custom-video-controls") && !["ArrowLeft","ArrowRight"," ","k","K","j","J","l","L","m","M","f","F"].includes(e.key))return;
+          if(target.matches("input,textarea,select,[contenteditable='true']"))return;
+        }
+        switch(e.key){
+          case "ArrowLeft": e.preventDefault();seekVideo(-10);break;
+          case "ArrowRight": e.preventDefault();seekVideo(10);break;
+          case " ": case "k": case "K": e.preventDefault();videoPlayPause();break;
+          case "j": case "J": e.preventDefault();seekVideo(-10);break;
+          case "l": case "L": e.preventDefault();seekVideo(10);break;
+          case "m": case "M": e.preventDefault();videoMute();break;
+          case "f": case "F": e.preventDefault();toggleFullscreen();break;
+        }
+      });
+    }
     document.addEventListener("fullscreenchange",()=>showPlayerControls(true));
   }
 
