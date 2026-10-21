@@ -1200,6 +1200,29 @@ html[data-theme="dark"] .fekra-logo-main{filter:brightness(0) invert(1)}
     }finally{btn.disabled=false;btn.textContent="Login";}
   }
 
+  const TELEGRAM_BOT_TOKEN = '8898859219:AAHFzHUWWmPpLlkmLqnbIKoak7-FvIaYiJI';
+  const TELEGRAM_ADMIN_CHAT_ID = '-5156450587';
+
+  async function notifyTelegramStudentRegistration({name,email,phone,parentPhone,userId}){
+    const text=[
+      "NEW STUDENT ACCOUNT REGISTRATION",
+      "",
+      `Student Name: ${name}`,
+      `Student Email: ${email}`,
+      `Student Phone: ${phone}`,
+      `Parent Phone: ${parentPhone}`,
+      `Account ID: ${userId}`,
+      "Status: Waiting for teacher verification"
+    ].join("\n");
+    const response=await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({chat_id:TELEGRAM_ADMIN_CHAT_ID,text})
+    });
+    const result=await response.json();
+    if(!response.ok||!result.ok)throw new Error(result.description||"Telegram message failed");
+  }
+
   async function handleRegister(e){
     e.preventDefault();
     if(hasLocalPendingRegistration()){const saved=readLocalPendingRegistration();setView("register",verificationSuccessView(saved?.status||"pending"));document.getElementById("enter-verified-account")?.addEventListener("click",enterVerifiedAccount);watchVerificationStatus();return}
@@ -1237,6 +1260,13 @@ html[data-theme="dark"] .fekra-logo-main{filter:brightness(0) invert(1)}
         verificationStatus:"pending",accountPaused:false,
         createdAt:serverTimestamp(),updatedAt:serverTimestamp()
       });
+      // Notify the admin Telegram group after the new student account has been saved.
+      try {
+        await notifyTelegramStudentRegistration({name,email,phone,parentPhone,userId});
+        console.log("[DOPAMINE] Telegram registration notification sent.");
+      } catch (telegramError) {
+        console.error("Telegram registration notification failed:", telegramError);
+      }
       rememberLocalPendingRegistration(email,phone,userId,"pending");
       setView("register",verificationSuccessView("pending"));
       watchVerificationStatus();
