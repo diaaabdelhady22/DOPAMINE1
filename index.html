@@ -308,6 +308,22 @@
       .lesson-layout{gap:14px}
     }
     /* Profile / contact */
+    /* Seek indicator (±10s) */
+    .seek-indicator{position:absolute;top:50%;z-index:5;pointer-events:none;transform:translateY(-50%);opacity:1;transition:opacity .25s ease}
+    .seek-indicator.seek-forward{right:12%}
+    .seek-indicator.seek-back{left:12%}
+    .seek-indicator.out{opacity:0}
+    .seek-ring{position:relative;width:64px;height:64px;display:grid;place-items:center;border-radius:50%;background:rgba(15,23,42,.78);border:2px solid var(--orange);color:var(--orange);box-shadow:0 8px 24px rgba(0,0,0,.35);animation:seekPop .22s ease-out both}
+    .seek-ring .seek-arrow{position:absolute;inset:0;display:grid;place-items:center;font-size:56px;opacity:.9}
+    .seek-ring.spin .seek-arrow{animation:seekSpinF .55s cubic-bezier(.3,.7,.3,1)}
+    .seek-back .seek-ring.spin .seek-arrow{animation-name:seekSpinB}
+    .seek-num{position:relative;font-size:15px;font-weight:800;color:#fff;line-height:1}
+    @keyframes seekPop{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+    @keyframes seekSpinF{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+    @keyframes seekSpinB{from{transform:rotate(0)}to{transform:rotate(-360deg)}}
+    .custom-video-controls button .mi.btn-spin-f{animation:seekSpinF .45s ease}
+    .custom-video-controls button .mi.btn-spin-b{animation:seekSpinB .45s ease}
+    @media(max-width:600px){.seek-ring{width:52px;height:52px}.seek-ring .seek-arrow{font-size:46px}.seek-num{font-size:13px}.seek-indicator.seek-forward{right:8%}.seek-indicator.seek-back{left:8%}}
     .profile-grid{display:grid;grid-template-columns:280px 1fr;gap:22px}
     .profile-side,.profile-main,.contact-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:25px}
     .profile-avatar{width:105px;height:105px;border-radius:50%;background:#f0f2f5;overflow:hidden;display:grid;place-items:center;font-size:34px;font-weight:800;margin:0 auto 13px;color:var(--orange)}
@@ -1641,12 +1657,48 @@ async function lessonView(courseId,lessonId,kind='lessons'){
     label.textContent=`${formatPlayerTime(current)} / ${formatPlayerTime(duration)}`;
   }
 
+  // Small animated badge on the video: on the right for forward, on the left for backward.
+  function showSeekIndicator(sec){
+    const wrap=document.getElementById("video-player");
+    if(!wrap)return;
+    const forward=sec>0, side=forward?"forward":"back";
+    let box=wrap.querySelector(".seek-indicator.seek-"+side);
+    const now=Date.now();
+    // Accumulate quick repeated taps in the same direction: 10, 20, 30...
+    if(box && now-(Number(box.dataset.t)||0)<900){
+      box.dataset.total=String((Number(box.dataset.total)||0)+Math.abs(sec));
+    }else{
+      if(box) box.remove();
+      box=document.createElement("div");
+      box.className="seek-indicator seek-"+side;
+      box.dataset.total=String(Math.abs(sec));
+      box.innerHTML='<span class="seek-ring"><span class="mi seek-arrow">'+(forward?"rotate_right":"rotate_left")+'</span><b class="seek-num"></b></span>';
+      wrap.appendChild(box);
+    }
+    box.dataset.t=String(now);
+    box.querySelector(".seek-num").textContent=box.dataset.total;
+    // Restart the spin animation on every press.
+    const ring=box.querySelector(".seek-ring");
+    ring.classList.remove("spin");void ring.offsetWidth;ring.classList.add("spin");
+    clearTimeout(box.__hide);
+    box.__hide=setTimeout(()=>{box.classList.add("out");setTimeout(()=>box.remove(),260)},750);
+    box.classList.remove("out");
+    // Small spin on the control-bar button too.
+    const btnIcon=document.querySelector("#"+(forward?"forward10-btn":"back10-btn")+" .mi");
+    if(btnIcon){btnIcon.classList.remove("btn-spin-f","btn-spin-b");void btnIcon.offsetWidth;btnIcon.classList.add(forward?"btn-spin-f":"btn-spin-b")}
+  }
+
   function seekVideo(sec){
     showPlayerControls();
     if(!state.currentPlayer)return;
-    const duration=playerDuration(),target=Math.min(Math.max(0,playerCurrentTime()+Number(sec)),duration||playerCurrentTime()+Number(sec));
+    sec=Number(sec);
+    const duration=playerDuration(),target=Math.min(Math.max(0,playerCurrentTime()+sec),duration||playerCurrentTime()+sec);
     try{state.currentPlayer.seekTo(target,true)}catch(e){}
+    showSeekIndicator(sec);
+    syncVideoProgress();
   }
+  // Inline onclick handlers need these on window (this script is a module).
+  window.seekVideo=seekVideo;
 
   window.videoPlayPause=()=>{
     showPlayerControls();
