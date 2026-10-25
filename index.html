@@ -1576,7 +1576,7 @@ async function lessonView(courseId,lessonId,kind='lessons'){
               <div class="settings-grid">${[.75,1,1.25,1.5,1.75,2].map(v=>`<button class="quality-btn ${v===1?"active":""}" onclick="setSpeed(${v})">${v}×</button>`).join("")}</div>
             </div>
             <div class="settings-label">Quality</div>
-            <div class="settings-grid">${["default","hd1080","hd720","large","medium"].map(q=>`<button class="quality-btn ${q==="default"?"active":""}" data-quality="${q}" onclick="setVideoQuality('${q}')">${q==="default"?"Auto":q==="hd1080"?"1080p":q==="hd720"?"720p":q==="large"?"480p":"360p"}</button>`).join("")}</div>
+            <div class="settings-grid">${["hd1080","hd720","large","medium","default"].map(q=>`<button class="quality-btn ${q==="hd1080"?"active":""}" data-quality="${q}" onclick="setVideoQuality('${q}')">${q==="default"?"Auto":q==="hd1080"?"1080p":q==="hd720"?"720p":q==="large"?"480p":"360p"}</button>`).join("")}</div>
             <div class="settings-label">Captions</div>
             <div class="settings-grid"><button id="captions-off-btn" class="quality-btn active" onclick="setCaptions(false)">Off</button><button id="captions-on-btn" class="quality-btn" onclick="setCaptions(true)">On</button></div>
           </div>
@@ -1732,10 +1732,28 @@ async function lessonView(courseId,lessonId,kind='lessons'){
     document.getElementById("speed-menu")?.classList.remove("open");
     document.getElementById("settings-panel")?.classList.toggle("open");
   };
+  // Prefer the highest quality YouTube says is available. YouTube may still
+  // override this choice based on its own adaptive-streaming decisions.
+  function requestHighestAvailableQuality(){
+    const player=state.currentPlayer;
+    if(!player || !state.playerReady) return;
+    try{
+      const levels=player.getAvailableQualityLevels?.()||[];
+      const priority=["highres","hd2160","hd1440","hd1080","hd720","large","medium","small","tiny"];
+      const best=priority.find(q=>levels.includes(q)) || "hd1080";
+      player.setPlaybackQuality?.(best);
+      document.querySelectorAll("[data-quality]").forEach(b=>b.classList.toggle("active",b.dataset.quality===best));
+    }catch(e){
+      try{player.setPlaybackQuality?.("hd1080")}catch(_){}
+    }
+  }
   window.setVideoQuality=(quality)=>{
     showPlayerControls();
-    try{state.currentPlayer?.setPlaybackQuality?.(quality)}catch(e){}
-    document.querySelectorAll(".quality-btn").forEach(b=>b.classList.toggle("active",b.dataset.quality===quality));
+    try{
+      if(quality==="default") state.currentPlayer?.setPlaybackQuality?.("default");
+      else state.currentPlayer?.setPlaybackQuality?.(quality);
+    }catch(e){}
+    document.querySelectorAll("[data-quality]").forEach(b=>b.classList.toggle("active",b.dataset.quality===quality));
   };
   window.setCaptions=(enabled)=>{
     showPlayerControls();
@@ -1854,6 +1872,8 @@ async function lessonView(courseId,lessonId,kind='lessons'){
           onReady:(e)=>{
             state.playerReady=true;
             try{e.target.playVideo()}catch(err){}
+            // Request the highest available quality instead of starting in Auto.
+            setTimeout(requestHighestAvailableQuality, 500);
             updateVideoUI();
             initPlayerInteractions();
             syncVideoProgress();
@@ -1862,6 +1882,7 @@ async function lessonView(courseId,lessonId,kind='lessons'){
           onStateChange:(e)=>{
             syncCenterPlayIcon(e.data);
             showPlayerControls();
+            if(e.data===YT.PlayerState.PLAYING) setTimeout(requestHighestAvailableQuality, 700);
           },
           onError:()=>showToast("Unable to load this lesson.")
         }
