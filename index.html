@@ -409,6 +409,14 @@
     .dashboard-quick{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.quick-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:17px;display:flex;align-items:center;gap:12px}.quick-card .mi{color:var(--orange)}
     .lesson-layout{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:18px;align-items:start}.lesson-sidebar{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;position:sticky;top:96px;max-height:calc(100vh - 115px);overflow:auto}.lesson-sidebar h3{font-size:14px;margin:5px 7px 12px}.lesson-resources-card{margin-top:22px}.lesson-resources-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}.lesson-resources-title{display:flex;align-items:center;gap:10px}.lesson-resources-icon{width:42px;height:42px;border-radius:12px;background:#fff3ea;color:var(--orange);display:grid;place-items:center;flex:none}.lesson-resources-icon .mi{font-size:22px}.lesson-resources-title h3{margin:0;font-size:18px}.lesson-resources-sub{margin:3px 0 0;color:var(--muted);font-size:12px}.lesson-resource-grid{display:grid;gap:10px}.lesson-resource-card{display:flex;align-items:center;justify-content:space-between;gap:14px;border:1px solid var(--line);border-radius:13px;padding:13px 14px;background:var(--surface);transition:.18s}.lesson-resource-card:hover{border-color:#f2b184;transform:translateY(-1px)}.lesson-resource-left{display:flex;align-items:center;gap:12px;min-width:0}.lesson-resource-file-icon{width:42px;height:42px;border-radius:11px;background:#f3f5f7;color:var(--navy);display:grid;place-items:center;flex:none}.lesson-resource-file-icon .mi{font-size:21px}.lesson-resource-info{min-width:0}.lesson-resource-name{font-size:13px;font-weight:800;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lesson-resource-meta{font-size:11px;color:var(--muted);margin-top:3px}.lesson-resource-actions{display:flex;gap:7px;flex:none}.lesson-resource-btn{height:38px;padding:0 11px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--navy);display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:12px;font-weight:800;cursor:pointer}.lesson-resource-btn:hover{border-color:#efaa74;color:var(--orange)}.lesson-resource-btn.primary{background:var(--orange);border-color:var(--orange);color:#fff}.lesson-resource-btn.primary:hover{background:#d9630c;color:#fff}.lesson-resources-empty{padding:22px;text-align:center;border:1px dashed var(--line);border-radius:13px;color:var(--muted);font-size:13px}.lesson-resources-empty .mi{display:block;font-size:30px;margin-bottom:7px;opacity:.55}@media(max-width:700px){.lesson-resources-head{align-items:flex-start}.lesson-resource-card{align-items:flex-start;flex-direction:column}.lesson-resource-actions{width:100%}.lesson-resource-btn{flex:1}.lesson-resource-name{white-space:normal;overflow:visible;text-overflow:clip}}.lesson-side-row{display:flex;align-items:center;gap:10px;width:100%;border:1px solid transparent;background:#fff;border-radius:10px;padding:10px;text-align:left;color:var(--navy);margin-bottom:5px}.lesson-side-row:hover{background:var(--soft)}.lesson-side-row.active{background:#fff3ea;border-color:#ffd8bf;color:var(--orange)}.lesson-side-num{width:28px;height:28px;border-radius:8px;background:#f1f3f5;display:grid;place-items:center;font-size:11px;font-weight:800;flex:none}.lesson-side-row.active .lesson-side-num{background:var(--orange);color:#fff}.lesson-side-title{font-size:12px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lesson-side-row .mi{font-size:17px;margin-left:auto}
     .custom-video-controls{background:#10151c;padding:10px 12px 11px;border-top:1px solid rgba(255,255,255,.08);transition:opacity .22s ease,transform .22s ease}.video-player.controls-hidden .custom-video-controls{opacity:0;transform:translateY(100%);pointer-events:none}.video-player.controls-hidden{cursor:none}.custom-video-controls button{background:#1a222c;border:1px solid #2a3542}.custom-video-controls button:hover{background:#25313f}.timeline{height:5px;background:#35404c;margin-bottom:10px}.caption-toggle.on{background:var(--orange)!important;border-color:var(--orange)!important}
+    /* Native YouTube mode: remove the platform's transparent click-capture layer
+       so the official YouTube controls remain directly accessible.
+       The custom DOPAMINE player is intentionally left unchanged. */
+    #video-player.native-youtube-controls .custom-video-controls,
+    #video-player.native-youtube-controls #center-play-circle,
+    #video-player.native-youtube-controls .video-protect{display:none!important}
+    #video-player.native-youtube-controls .video-protect{pointer-events:none!important}
+
     .profile-logout{width:100%;margin-top:15px}.profile-logout .mi{font-size:18px}
     @media(max-width:900px){.lesson-layout{grid-template-columns:1fr}.lesson-sidebar{position:static;max-height:none;order:2}.dashboard-quick{grid-template-columns:1fr}}
     @media(max-width:700px){.dashboard-hero{padding:22px;flex-direction:column;align-items:flex-start}.dashboard-hero h1{font-size:28px}.dashboard-hero .btn{width:100%}.lesson-sidebar{display:grid;grid-template-columns:1fr 1fr;gap:5px}.lesson-sidebar h3{grid-column:1/-1}.lesson-side-row{margin:0}.custom-video-controls{padding:8px}.custom-video-controls button{min-width:34px}.time-label{min-width:72px}.video-player .center-play-circle{width:58px;height:58px}.video-player .center-play-circle .mi{font-size:25px}}
@@ -526,6 +534,54 @@ html[data-theme="dark"] .website-about h2,html[data-theme="dark"] .website-about
 html[data-theme="dark"] .website-about p,html[data-theme="dark"] .website-about .founder-role{color:var(--muted,#aab5c3)}
 html[data-theme="dark"] .fekra-logo-main{filter:brightness(0) invert(1)}
 @media(max-width:760px){.website-about{padding:48px 16px 56px}.website-about-inner{grid-template-columns:1fr;min-height:0;padding:36px 24px;row-gap:20px;text-align:center;border-radius:18px}.website-about .eyebrow{margin-bottom:14px}.website-about h2{font-size:clamp(30px,8vw,40px)}.website-about p{margin-inline:auto;font-size:15px}.website-about .founder-name{font-size:23px}.fekra-logos{min-height:0;padding:25px 0 8px;border-left:0;border-top:1px solid var(--line,#e5e7eb)}.fekra-logo-main{width:min(100%,360px);max-height:150px}.fekra-visit{margin-top:23px;width:100%;max-width:300px;box-sizing:border-box}}
+
+
+    /* Refined in-player settings panel */
+    .player-settings-panel{
+      position:absolute;right:12px;bottom:66px;width:320px;max-height:calc(100% - 82px);
+      overflow-y:auto;padding:16px;background:#fff;color:#172638;border:1px solid #e5e9ef;
+      border-radius:13px;box-shadow:0 12px 34px rgba(0,0,0,.32);z-index:35;
+    }
+    .settings-panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-bottom:10px;border-bottom:1px solid #edf0f3;margin-bottom:10px}
+    .player-settings-panel .settings-title{display:flex;align-items:center;gap:8px;color:#172638;font-size:13px;font-weight:800;margin:0}
+    .player-settings-panel .settings-title .mi{font-size:18px;color:var(--orange)}
+    .settings-close{width:28px;height:28px;min-width:28px!important;padding:0!important;display:grid;place-items:center;background:#f2f4f6!important;color:#586577!important;border:0!important;border-radius:8px!important}
+    .settings-close .mi{font-size:17px}
+    .player-settings-panel .settings-group{margin:0 0 11px}
+    .player-settings-panel .settings-label{font-size:10px;letter-spacing:.04em;text-transform:uppercase;color:#758195;margin:0 0 7px}
+    .player-settings-panel .settings-grid{grid-template-columns:repeat(6,minmax(0,1fr));gap:5px}
+    .player-settings-panel .settings-caption-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .player-settings-panel .settings-grid .quality-btn{
+      min-width:0;padding:7px 3px;font-size:11px;font-weight:750;border-radius:7px;
+      border:1px solid #e4e8ed;background:#f6f7f9;color:#344256;
+    }
+    .player-settings-panel .settings-grid .quality-btn.active{border-color:#f4a36c;background:#fff2e8;color:#d9630c}
+    .settings-panel-footer{padding-top:9px;border-top:1px solid #edf0f3}
+    .youtube-player-switch{
+      display:flex;align-items:center;gap:8px;width:100%;min-width:0!important;
+      padding:8px 9px!important;border:1px solid #e7ebf0!important;border-radius:8px!important;
+      background:#fafbfc!important;color:#657184!important;font-size:10px;font-weight:700;
+      text-align:left;white-space:nowrap;
+    }
+    .youtube-player-switch:hover{background:#fff5ed!important;border-color:#f3c19e!important;color:#bd5b18!important}
+    .youtube-player-switch>.mi:first-child{font-size:16px;color:#e36f1d}
+    .youtube-player-switch .switch-arrow{font-size:13px;margin-left:auto;color:#9aa4b2}
+    @media(max-width:600px) and (orientation:portrait){
+      .player-settings-panel{inset:8px;width:auto;max-height:calc(100% - 16px);padding:16px;border-radius:12px}
+      .player-settings-panel .settings-title{font-size:15px;margin:0;padding:0;border:0}
+      .player-settings-panel .settings-label{font-size:11px;margin:0 0 8px}
+      .player-settings-panel .settings-grid{grid-template-columns:repeat(6,minmax(0,1fr));gap:5px}
+      .player-settings-panel .settings-grid .quality-btn{min-height:36px;padding:7px 3px;font-size:12px}
+      .player-settings-panel .settings-caption-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+    }
+    html[data-theme="dark"] .player-settings-panel{background:#17212c;color:#f5f7fa;border-color:#344252}
+    html[data-theme="dark"] .settings-panel-head,html[data-theme="dark"] .settings-panel-footer{border-color:#344252}
+    html[data-theme="dark"] .player-settings-panel .settings-title{color:#f5f7fa}
+    html[data-theme="dark"] .player-settings-panel .settings-label{color:#aab6c5}
+    html[data-theme="dark"] .settings-close{background:#25313f!important;color:#dce3eb!important}
+    html[data-theme="dark"] .player-settings-panel .settings-grid .quality-btn{background:#202c39;color:#e7edf4;border-color:#344252}
+    html[data-theme="dark"] .player-settings-panel .settings-grid .quality-btn.active{background:rgba(244,123,32,.16);border-color:var(--orange);color:#ff9b52}
+    html[data-theme="dark"] .youtube-player-switch{background:#202c39!important;color:#c3ccd7!important;border-color:#344252!important}
 
 </style>
 </head>
@@ -1533,6 +1589,7 @@ window.navigateLessonMedia=function(direction){
   if(nextLesson)navigate(state.currentKind==='homework'?'homework':'lesson',{courseId:encodeURIComponent(state.currentCourse.id),lessonId:encodeURIComponent(nextLesson.id)});
 };
 async function lessonView(courseId,lessonId,kind='lessons'){
+  window.__dopamineNativeYTControls=false;
   const isHw=kind==='homework',gid=isHw?'hw_'+lessonId:lessonId;state.currentKind=kind;
   setView("lesson",`<div class="lesson-wrap"><div class="container"><div class="loading"><div class="spinner"></div>Loading lesson...</div></div></div>`);
   try{
@@ -1552,8 +1609,7 @@ async function lessonView(courseId,lessonId,kind='lessons'){
     setView("lesson",`<div class="lesson-wrap"><div class="container"><div class="lesson-layout"><main>
       <div class="lesson-top"><div class="eyebrow">${escapeHTML(course.title||"Course")}</div><h1>${escapeHTML(lesson.title||(isHw?"Homework":"Lesson"))}</h1></div>
       ${videoId?`<div id="video-player" class="video-player" oncontextmenu="return false">
-        <div class="video-frame"><div id="youtube-frame"></div></div>
-        <div class="video-protect" oncontextmenu="return false" ondragstart="return false"></div>
+        <div class="video-frame"><div id="youtube-frame"></div></div>\n        <div class="video-protect" oncontextmenu="return false" ondragstart="return false"></div>
         <div id="center-play-circle" class="center-play-circle"><span class="mi">play_arrow</span></div>
         <div class="custom-video-controls">
           <div id="timeline" class="timeline"><span id="timeline-fill"></span></div>
@@ -1569,16 +1625,26 @@ async function lessonView(courseId,lessonId,kind='lessons'){
             <button onclick="togglePlayerSettings()" id="mobile-settings-btn" aria-label="Playback settings"><span class="mi">settings</span></button>
             <button onclick="toggleFullscreen()" aria-label="Fullscreen"><span class="mi">fullscreen</span></button>
           </div>
-          <div id="settings-panel" class="player-settings-panel">
-            <div class="settings-title">Playback settings</div>
+        </div>
+        <div id="settings-panel" class="player-settings-panel">
+          <div class="settings-panel-head">
+            <div class="settings-title"><span class="mi">tune</span> Player settings</div>
+            <button type="button" class="settings-close" onclick="togglePlayerSettings()" aria-label="Close settings"><span class="mi">close</span></button>
+          </div>
+          <div class="settings-group">
+            <div class="settings-label">Playback speed</div>
             <div class="settings-speed-options">
-              <div class="settings-label">Playback speed</div>
               <div class="settings-grid">${[.75,1,1.25,1.5,1.75,2].map(v=>`<button class="quality-btn ${v===1?"active":""}" onclick="setSpeed(${v})">${v}×</button>`).join("")}</div>
             </div>
-            <div class="settings-label">Quality</div>
-            <div class="settings-grid">${["hd1080","hd720","large","medium","default"].map(q=>`<button class="quality-btn ${q==="hd1080"?"active":""}" data-quality="${q}" onclick="setVideoQuality('${q}')">${q==="default"?"Auto":q==="hd1080"?"1080p":q==="hd720"?"720p":q==="large"?"480p":"360p"}</button>`).join("")}</div>
+          </div>
+          <div class="settings-group">
             <div class="settings-label">Captions</div>
-            <div class="settings-grid"><button id="captions-off-btn" class="quality-btn active" onclick="setCaptions(false)">Off</button><button id="captions-on-btn" class="quality-btn" onclick="setCaptions(true)">On</button></div>
+            <div class="settings-grid settings-caption-grid"><button id="captions-off-btn" class="quality-btn active" onclick="setCaptions(false)">Off</button><button id="captions-on-btn" class="quality-btn" onclick="setCaptions(true)">On</button></div>
+          </div>
+          <div class="settings-panel-footer">
+            <button type="button" class="youtube-player-switch" onclick="switchToYouTubeControls()">
+              <span class="mi">smart_display</span><span>Switch to YouTube player</span><span class="mi switch-arrow">arrow_outward</span>
+            </button>
           </div>
         </div>
       </div>`:`<div class="empty">This lesson does not have a valid video yet.</div>`}
@@ -1749,11 +1815,12 @@ async function lessonView(courseId,lessonId,kind='lessons'){
   }
   window.setVideoQuality=(quality)=>{
     showPlayerControls();
-    try{
-      if(quality==="default") state.currentPlayer?.setPlaybackQuality?.("default");
-      else state.currentPlayer?.setPlaybackQuality?.(quality);
-    }catch(e){}
     document.querySelectorAll("[data-quality]").forEach(b=>b.classList.toggle("active",b.dataset.quality===quality));
+    if(quality==="tiny"){
+      switchToYouTubeControls();
+      return;
+    }
+    try{state.currentPlayer?.setPlaybackQuality?.(quality==="default"?"default":quality)}catch(e){}
   };
   window.setCaptions=(enabled)=>{
     showPlayerControls();
@@ -1862,27 +1929,46 @@ async function lessonView(courseId,lessonId,kind='lessons'){
     document.addEventListener("fullscreenchange",()=>showPlayerControls(true));
   }
 
-  function initPlayer(videoId){
+  function switchToYouTubeControls(){
+    const player=state.currentPlayer;
+    if(!player || window.__dopamineNativeYTControls)return;
+    let time=0,wasPlaying=false,videoId=state.currentParts?.[state.currentPartIndex]?.id||"";
+    try{time=player.getCurrentTime?.()||0;wasPlaying=player.getPlayerState?.()===YT.PlayerState.PLAYING}catch(e){}
+    if(!videoId)return;
+    window.__dopamineNativeYTControls=true;
+    document.getElementById("video-player")?.classList.add("native-youtube-controls");
+    try{player.destroy()}catch(e){}
+    state.currentPlayer=null;state.playerReady=false;
+    initPlayer(videoId,time,true,wasPlaying);
+  }
+
+  window.switchToYouTubeControls=switchToYouTubeControls;
+
+  function initPlayer(videoId,startSeconds=0,nativeControls=false,autoPlay=true){
     return loadYouTubeAPI().then(()=>{
       state.playerReady=false;
       state.currentPlayer=new YT.Player("youtube-frame",{
         videoId,
-        playerVars:{autoplay:1,rel:0,modestbranding:1,controls:0,fs:0,playsinline:1,enablejsapi:1,disablekb:1,cc_load_policy:0,iv_load_policy:3},
+        playerVars:{autoplay:autoPlay?1:0,rel:0,controls:nativeControls?1:0,fs:nativeControls?1:0,playsinline:1,enablejsapi:1,disablekb:nativeControls?0:1,cc_load_policy:0,iv_load_policy:3,start:Math.floor(Math.max(0,startSeconds||0))},
         events:{
           onReady:(e)=>{
             state.playerReady=true;
-            try{e.target.playVideo()}catch(err){}
-            // Request the highest available quality instead of starting in Auto.
-            setTimeout(requestHighestAvailableQuality, 500);
+            if(nativeControls){
+              if(autoPlay){try{e.target.playVideo()}catch(err){}}
+            }else{
+              try{e.target.playVideo()}catch(err){}
+              setTimeout(requestHighestAvailableQuality, 500);
+              initPlayerInteractions();
+              showPlayerControls();
+            }
             updateVideoUI();
-            initPlayerInteractions();
             syncVideoProgress();
-            showPlayerControls();
           },
+          onPlaybackQualityChange:()=>{},
           onStateChange:(e)=>{
             syncCenterPlayIcon(e.data);
-            showPlayerControls();
-            if(e.data===YT.PlayerState.PLAYING) setTimeout(requestHighestAvailableQuality, 700);
+            if(!window.__dopamineNativeYTControls)showPlayerControls();
+            if(e.data===YT.PlayerState.PLAYING && !window.__dopamineNativeYTControls) setTimeout(requestHighestAvailableQuality, 700);
           },
           onError:()=>showToast("Unable to load this lesson.")
         }
